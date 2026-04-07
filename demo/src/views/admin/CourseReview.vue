@@ -1,0 +1,292 @@
+<template>
+  <!-- 主内容 -->
+  <main class="main-container">
+    <div class="page-header">
+      <h1 class="page-title">📚 课程审核</h1>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-tabs">
+        <button class="active">待审核</button>
+        <button>已通过</button>
+        <button>已拒绝</button>
+      </div>
+      <div class="filter-group">
+        <select>
+          <option value="">全部分类</option>
+          <option value="cs">计算机科学</option>
+          <option value="math">数学</option>
+          <option value="physics">物理</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="course-list">
+      <div class="course-card">
+        <div class="course-cover">🤖</div>
+        <div class="course-info">
+          <span class="status-badge pending">待审核</span>
+          <h3>机器学习基础</h3>
+          <div class="course-teacher">👤 李教授 · 计算机学院 · 提交于 2024-03-24</div>
+          <p class="course-desc">
+            本课程系统介绍机器学习的基本概念、算法原理和应用实践，包括监督学习、非监督学习、深度学习等内容。
+          </p>
+          <div class="course-meta">
+            <span>📊 难度：进阶级</span>
+            <span>⏱️ 48课时</span>
+            <span>👥 预计容量：100人</span>
+          </div>
+        </div>
+        <div class="course-actions">
+          <button class="btn-success">✓ 通过</button>
+          <button class="btn-danger">✗ 拒绝</button>
+          <button class="btn-secondary">查看详情</button>
+        </div>
+      </div>
+
+      <div class="course-card">
+        <div
+          class="course-cover"
+          style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+        >
+          🧠
+        </div>
+        <div class="course-info">
+          <span class="status-badge pending">待审核</span>
+          <h3>深度学习入门</h3>
+          <div class="course-teacher">👤 张老师 · 人工智能学院 · 提交于 2024-03-23</div>
+          <p class="course-desc">
+            从神经网络基础到深度学习框架应用，循序渐进地学习深度学习技术，包含大量实战项目。
+          </p>
+          <div class="course-meta">
+            <span>📊 难度：高级</span>
+            <span>⏱️ 36课时</span>
+            <span>👥 预计容量：80人</span>
+          </div>
+        </div>
+        <div class="course-actions">
+          <button class="btn-success">✓ 通过</button>
+          <button class="btn-danger">✗ 拒绝</button>
+          <button class="btn-secondary">查看详情</button>
+        </div>
+      </div>
+
+      <div class="course-card">
+        <div
+          class="course-cover"
+          style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+        >
+          ☁️
+        </div>
+        <div class="course-info">
+          <span class="status-badge pending">待审核</span>
+          <h3>云计算技术</h3>
+          <div class="course-teacher">👤 王教授 · 软件学院 · 提交于 2024-03-22</div>
+          <p class="course-desc">
+            介绍云计算的基本概念、服务模型和部署模式，涵盖AWS、Azure、阿里云等主流云平台的使用。
+          </p>
+          <div class="course-meta">
+            <span>📊 难度：进阶级</span>
+            <span>⏱️ 32课时</span>
+            <span>👥 预计容量：120人</span>
+          </div>
+        </div>
+        <div class="course-actions">
+          <button class="btn-success">✓ 通过</button>
+          <button class="btn-danger">✗ 拒绝</button>
+          <button class="btn-secondary">查看详情</button>
+        </div>
+      </div>
+
+      <div class="course-card">
+        <div
+          class="course-cover"
+          style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+        >
+          🔒
+        </div>
+        <div class="course-info">
+          <span class="status-badge pending">待审核</span>
+          <h3>网络安全基础</h3>
+          <div class="course-teacher">👤 陈老师 · 信息安全学院 · 提交于 2024-03-21</div>
+          <p class="course-desc">
+            学习网络安全的基本概念、常见攻击手段和防御技术，培养安全意识和防护能力。
+          </p>
+          <div class="course-meta">
+            <span>📊 难度：入门级</span>
+            <span>⏱️ 24课时</span>
+            <span>👥 预计容量：150人</span>
+          </div>
+        </div>
+        <div class="course-actions">
+          <button class="btn-success">✓ 通过</button>
+          <button class="btn-danger">✗ 拒绝</button>
+          <button class="btn-secondary">查看详情</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<style scoped>
+/* 主内容 */
+.main-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+/* 筛选栏 */
+.filter-bar {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+}
+.filter-tabs button {
+  padding: 10px 20px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.filter-tabs button.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.filter-group select {
+  padding: 8px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+/* 课程列表 */
+.course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.course-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+  align-items: start;
+}
+.course-cover {
+  width: 160px;
+  height: 100px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 48px;
+}
+.course-info h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+.course-teacher {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.course-desc {
+  color: #999;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.course-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  color: #999;
+}
+.course-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.btn-success {
+  padding: 10px 24px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-danger {
+  padding: 10px 24px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-secondary {
+  padding: 10px 24px;
+  background: #f5f7fa;
+  color: #667eea;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  display: inline-block;
+}
+.status-badge.pending {
+  background: #fff3e0;
+  color: #ff9800;
+}
+.status-badge.approved {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+.status-badge.rejected {
+  background: #ffebee;
+  color: #f44336;
+}
+</style>

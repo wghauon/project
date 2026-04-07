@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>视频管理 - 在线教育平台</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: #f5f7fa;
+      }
+      /* 顶部导航 */
+      .navbar {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .nav-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #667eea;
+      }
+      .nav-menu {
+        display: flex;
+        gap: 32px;
+      }
+      .nav-menu a {
+        text-decoration: none;
+        color: #333;
+        font-size: 15px;
+        font-weight: 500;
+        transition: color 0.3s;
+      }
+      .nav-menu a:hover,
+      .nav-menu a.active {
+        color: #667eea;
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
+      /* 主内容 */
+      .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px 20px;
+      }
+      /* 课程标题栏 */
+      .course-header {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .course-info h1 {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+      }
+      .course-meta {
+        display: flex;
+        gap: 20px;
+        color: #666;
+        font-size: 14px;
+      }
+      .course-actions {
+        display: flex;
+        gap: 12px;
+      }
+      .btn-primary {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .btn-secondary {
+        padding: 10px 20px;
+        background: #f5f7fa;
+        color: #667eea;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      /* 管理区域 */
+      .manage-container {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 24px;
+      }
+      /* 侧边菜单 */
+      .side-menu {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        height: fit-content;
+      }
+      .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 4px;
+      }
+      .menu-item:hover {
+        background: #f5f7fa;
+      }
+      .menu-item.active {
+        background: #f0f4ff;
+        color: #667eea;
+      }
+      .menu-icon {
+        font-size: 20px;
+      }
+      .menu-text {
+        font-size: 14px;
+      }
+      /* 内容区 */
+      .content-area {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+      .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .content-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+      /* 统计卡片 */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .stat-card {
+        background: #f5f7fa;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 28px;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 4px;
+      }
+      .stat-label {
+        font-size: 13px;
+        color: #666;
+      }
+      /* 工具栏 */
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #f5f7fa;
+        border-radius: 10px;
+      }
+      .filter-group {
+        display: flex;
+        gap: 12px;
+      }
+      .filter-group select,
+      .filter-group input {
+        padding: 8px 14px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .search-box {
+        position: relative;
+      }
+      .search-box input {
+        width: 240px;
+        padding-left: 36px;
+      }
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      /* 视频列表 */
+      .video-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .video-item {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        border: 2px solid #f0f0f0;
+        border-radius: 12px;
+        transition: all 0.3s;
+      }
+      .video-item:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+      }
+      .video-thumbnail {
+        width: 200px;
+        height: 120px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 48px;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .video-duration {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      .video-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .video-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .video-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+      }
+      .video-chapter {
+        font-size: 13px;
+        color: #999;
+      }
+      .video-status {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .video-status.published {
+        background: #e8f5e9;
+        color: #4caf50;
+      }
+      .video-status.draft {
+        background: #fff3e0;
+        color: #ff9800;
+      }
+      .video-status.processing {
+        background: #e3f2fd;
+        color: #2196f3;
+      }
+      .video-meta {
+        display: flex;
+        gap: 24px;
+        font-size: 13px;
+        color: #666;
+      }
+      .video-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .video-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .btn-icon {
+        padding: 8px 14px;
+        background: #f5f7fa;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.3s;
+      }
+      .btn-icon:hover {
+        background: #667eea;
+        color: white;
+      }
+      /* 上传区域 */
+      .upload-area {
+        border: 2px dashed #e0e0e0;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        margin-bottom: 24px;
+        background: #fafafa;
+      }
+      .upload-area:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+      .upload-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+      }
+      .upload-text {
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 8px;
+      }
+      .upload-hint {
+        font-size: 13px;
+        color: #999;
+      }
+      /* 分页 */
+      .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 24px;
+      }
+      .pagination button {
+        padding: 10px 16px;
+        border: 2px solid #e0e0e0;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .pagination button.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="logo">
+          <span>📚</span>
+          <span>智慧学堂</span>
+        </div>
+        <div class="nav-menu">
+          <a href="my-teaching.html">我的教学</a>
+          <a href="course-manage.html" class="active">课程管理</a>
+          <a href="exam-manage.html">考试管理</a>
+          <a href="student-manage.html">学生管理</a>
+        </div>
+        <div class="nav-right">
+          <div class="user-info">
+            <div class="avatar">王</div>
+            <span>王教授</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+      <!-- 课程标题 -->
+      <div class="course-header">
+        <div class="course-info">
+          <h1>Python程序设计基础</h1>
+          <div class="course-meta">
+            <span>👨‍🎓 86名学生</span>
+            <span>📹 32课时</span>
+            <span>📅 2024春季学期</span>
+            <span>🟢 进行中</span>
+          </div>
+        </div>
+        <div class="course-actions">
+          <button class="btn-secondary">预览课程</button>
+          <button class="btn-primary">编辑信息</button>
+        </div>
+      </div>
+
+      <!-- 管理区域 -->
+      <div class="manage-container">
+        <!-- 侧边菜单 -->
+        <aside class="side-menu">
+          <div class="menu-item">
+            <span class="menu-icon">📑</span>
+            <span class="menu-text">章节管理</span>
+          </div>
+          <div class="menu-item active">
+            <span class="menu-icon">📹</span>
+            <span class="menu-text">视频管理</span>
+          </div>
+          <div class="menu-item">
+            <span class="menu-icon">📎</span>
+            <span class="menu-text">资料管理</span>
+          </div>
+          <div class="menu-item">
+            <span class="menu-icon">📝</span>
+            <span class="menu-text">作业管理</span>
+          </div>
+          <div class="menu-item">
+            <span class="menu-icon">📢</span>
+            <span class="menu-text">通知管理</span>
+          </div>
+          <div class="menu-item">
+            <span class="menu-icon">💬</span>
+            <span class="menu-text">讨论管理</span>
+          </div>
+          <div class="menu-item">
+            <span class="menu-icon">🧪</span>
+            <span class="menu-text">实验管理</span>
+          </div>
+          <div class="menu-item">
+            <span class="menu-icon">📊</span>
+            <span class="menu-text">数据统计</span>
+          </div>
+        </aside>
+
+        <!-- 内容区 -->
+        <div class="content-area">
+          <div class="content-header">
+            <h2 class="content-title">📹 视频管理</h2>
+            <button class="btn-primary">➕ 上传视频</button>
+          </div>
+
+          <!-- 统计卡片 -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">32</div>
+              <div class="stat-label">视频总数</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">28</div>
+              <div class="stat-label">已发布</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">3</div>
+              <div class="stat-label">处理中</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">1</div>
+              <div class="stat-label">草稿</div>
+            </div>
+          </div>
+
+          <!-- 上传区域 -->
+          <div class="upload-area">
+            <div class="upload-icon">📤</div>
+            <div class="upload-text">拖拽视频文件到此处上传</div>
+            <div class="upload-hint">支持 MP4、AVI、MOV 格式，单个文件最大 2GB</div>
+          </div>
+
+          <!-- 工具栏 -->
+          <div class="toolbar">
+            <div class="filter-group">
+              <select>
+                <option value="">全部状态</option>
+                <option value="published">已发布</option>
+                <option value="draft">草稿</option>
+                <option value="processing">处理中</option>
+              </select>
+              <select>
+                <option value="">全部章节</option>
+                <option value="ch1">第1章：Python基础入门</option>
+                <option value="ch2">第2章：数据类型与运算符</option>
+                <option value="ch3">第3章：函数与模块</option>
+              </select>
+            </div>
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="搜索视频..." />
+            </div>
+          </div>
+
+          <!-- 视频列表 -->
+          <div class="video-list">
+            <div class="video-item">
+              <div class="video-thumbnail">
+                🎬
+                <span class="video-duration">15:30</span>
+              </div>
+              <div class="video-info">
+                <div class="video-header">
+                  <div>
+                    <h3 class="video-title">1.1 Python简介与安装</h3>
+                    <p class="video-chapter">第1章：Python基础入门</p>
+                  </div>
+                  <span class="video-status published">已发布</span>
+                </div>
+                <div class="video-meta">
+                  <span>📊 1,234次播放</span>
+                  <span>💬 45条评论</span>
+                  <span>👍 89%好评</span>
+                  <span>📅 2024-03-15上传</span>
+                  <span>💾 156MB</span>
+                </div>
+              </div>
+              <div class="video-actions">
+                <button class="btn-icon">▶️ 预览</button>
+                <button class="btn-icon">✏️ 编辑</button>
+                <button class="btn-icon">📊 数据</button>
+                <button class="btn-icon">🗑️ 删除</button>
+              </div>
+            </div>
+
+            <div class="video-item">
+              <div
+                class="video-thumbnail"
+                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+              >
+                🎬
+                <span class="video-duration">20:15</span>
+              </div>
+              <div class="video-info">
+                <div class="video-header">
+                  <div>
+                    <h3 class="video-title">1.2 第一个Python程序</h3>
+                    <p class="video-chapter">第1章：Python基础入门</p>
+                  </div>
+                  <span class="video-status published">已发布</span>
+                </div>
+                <div class="video-meta">
+                  <span>📊 1,156次播放</span>
+                  <span>💬 38条评论</span>
+                  <span>👍 92%好评</span>
+                  <span>📅 2024-03-15上传</span>
+                  <span>💾 198MB</span>
+                </div>
+              </div>
+              <div class="video-actions">
+                <button class="btn-icon">▶️ 预览</button>
+                <button class="btn-icon">✏️ 编辑</button>
+                <button class="btn-icon">📊 数据</button>
+                <button class="btn-icon">🗑️ 删除</button>
+              </div>
+            </div>
+
+            <div class="video-item">
+              <div
+                class="video-thumbnail"
+                style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+              >
+                🎬
+                <span class="video-duration">25:00</span>
+              </div>
+              <div class="video-info">
+                <div class="video-header">
+                  <div>
+                    <h3 class="video-title">1.3 基础语法</h3>
+                    <p class="video-chapter">第1章：Python基础入门</p>
+                  </div>
+                  <span class="video-status published">已发布</span>
+                </div>
+                <div class="video-meta">
+                  <span>📊 987次播放</span>
+                  <span>💬 52条评论</span>
+                  <span>👍 88%好评</span>
+                  <span>📅 2024-03-16上传</span>
+                  <span>💾 245MB</span>
+                </div>
+              </div>
+              <div class="video-actions">
+                <button class="btn-icon">▶️ 预览</button>
+                <button class="btn-icon">✏️ 编辑</button>
+                <button class="btn-icon">📊 数据</button>
+                <button class="btn-icon">🗑️ 删除</button>
+              </div>
+            </div>
+
+            <div class="video-item">
+              <div
+                class="video-thumbnail"
+                style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+              >
+                🎬
+                <span class="video-duration">18:45</span>
+              </div>
+              <div class="video-info">
+                <div class="video-header">
+                  <div>
+                    <h3 class="video-title">2.1 数字类型</h3>
+                    <p class="video-chapter">第2章：数据类型与运算符</p>
+                  </div>
+                  <span class="video-status processing">处理中</span>
+                </div>
+                <div class="video-meta">
+                  <span>📊 0次播放</span>
+                  <span>⏳ 转码进度: 65%</span>
+                  <span>📅 2024-03-20上传</span>
+                  <span>💾 180MB</span>
+                </div>
+              </div>
+              <div class="video-actions">
+                <button class="btn-icon">⏸️ 暂停</button>
+                <button class="btn-icon">🗑️ 取消</button>
+              </div>
+            </div>
+
+            <div class="video-item">
+              <div
+                class="video-thumbnail"
+                style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+              >
+                🎬
+                <span class="video-duration">30:00</span>
+              </div>
+              <div class="video-info">
+                <div class="video-header">
+                  <div>
+                    <h3 class="video-title">3.1 函数的定义与调用（草稿）</h3>
+                    <p class="video-chapter">第3章：函数与模块</p>
+                  </div>
+                  <span class="video-status draft">草稿</span>
+                </div>
+                <div class="video-meta">
+                  <span>📊 未发布</span>
+                  <span>📅 2024-03-21上传</span>
+                  <span>💾 320MB</span>
+                </div>
+              </div>
+              <div class="video-actions">
+                <button class="btn-icon">▶️ 预览</button>
+                <button class="btn-icon">✏️ 编辑</button>
+                <button class="btn-icon">✅ 发布</button>
+                <button class="btn-icon">🗑️ 删除</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 分页 -->
+          <div class="pagination">
+            <button>上一页</button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>下一页</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

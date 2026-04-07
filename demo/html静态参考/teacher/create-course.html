@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>创建课程 - 在线教育平台</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: #f5f7fa;
+      }
+      /* 顶部导航 */
+      .navbar {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .nav-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #667eea;
+      }
+      .nav-menu {
+        display: flex;
+        gap: 32px;
+      }
+      .nav-menu a {
+        text-decoration: none;
+        color: #333;
+        font-size: 15px;
+        font-weight: 500;
+        transition: color 0.3s;
+      }
+      .nav-menu a:hover,
+      .nav-menu a.active {
+        color: #667eea;
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
+      /* 主内容 */
+      .main-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 32px 20px;
+      }
+      .page-header {
+        margin-bottom: 32px;
+      }
+      .page-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+      }
+      .page-subtitle {
+        color: #666;
+        margin-top: 8px;
+      }
+      /* 表单 */
+      .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+      .form-section {
+        margin-bottom: 32px;
+      }
+      .form-section:last-child {
+        margin-bottom: 0;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .form-group label .required {
+        color: #f44336;
+        margin-left: 4px;
+      }
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+      /* 封面上传 */
+      .cover-upload {
+        border: 2px dashed #e0e0e0;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .cover-upload:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+      .upload-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+      }
+      .upload-text {
+        color: #666;
+        font-size: 14px;
+      }
+      .upload-hint {
+        color: #999;
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      /* 权限设置 */
+      .permission-options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .permission-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: #f5f7fa;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .permission-item:hover {
+        background: #f0f4ff;
+      }
+      .permission-item input[type='radio'] {
+        width: 20px;
+        height: 20px;
+        accent-color: #667eea;
+      }
+      .permission-info {
+        flex: 1;
+      }
+      .permission-title {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 4px;
+      }
+      .permission-desc {
+        font-size: 13px;
+        color: #666;
+      }
+      /* 按钮 */
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 16px;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 2px solid #f0f0f0;
+      }
+      .btn-secondary {
+        padding: 12px 32px;
+        background: #f5f7fa;
+        color: #666;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .btn-primary {
+        padding: 12px 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="logo">
+          <span>📚</span>
+          <span>智慧学堂</span>
+        </div>
+        <div class="nav-menu">
+          <a href="my-teaching.html">我的教学</a>
+          <a href="course-manage.html">课程管理</a>
+          <a href="exam-manage.html">考试管理</a>
+          <a href="student-manage.html">学生管理</a>
+        </div>
+        <div class="nav-right">
+          <div class="user-info">
+            <div class="avatar">王</div>
+            <span>王教授</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+      <div class="page-header">
+        <h1 class="page-title">➕ 创建课程</h1>
+        <p class="page-subtitle">填写课程信息，创建您的在线课程</p>
+      </div>
+
+      <div class="form-card">
+        <form>
+          <!-- 基本信息 -->
+          <div class="form-section">
+            <h2 class="section-title">📋 基本信息</h2>
+            <div class="form-group">
+              <label>课程封面</label>
+              <div class="cover-upload">
+                <div class="upload-icon">🖼️</div>
+                <div class="upload-text">点击上传课程封面</div>
+                <div class="upload-hint">支持 JPG、PNG 格式，建议尺寸 1200x600</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>课程名称 <span class="required">*</span></label>
+                <input type="text" placeholder="请输入课程名称" />
+              </div>
+              <div class="form-group">
+                <label>课程分类 <span class="required">*</span></label>
+                <select>
+                  <option value="">请选择分类</option>
+                  <option value="cs">计算机科学</option>
+                  <option value="math">数学</option>
+                  <option value="physics">物理</option>
+                  <option value="chemistry">化学</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>课程类型 <span class="required">*</span></label>
+                <select>
+                  <option value="">请选择类型</option>
+                  <option value="required">必修课</option>
+                  <option value="elective">选修课</option>
+                  <option value="public">公共课</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>难度等级 <span class="required">*</span></label>
+                <select>
+                  <option value="">请选择难度</option>
+                  <option value="beginner">入门级</option>
+                  <option value="intermediate">进阶级</option>
+                  <option value="advanced">高级</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>课程简介 <span class="required">*</span></label>
+              <textarea placeholder="请输入课程简介，介绍课程内容、学习目标等..."></textarea>
+            </div>
+          </div>
+
+          <!-- 课程安排 -->
+          <div class="form-section">
+            <h2 class="section-title">📅 课程安排</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label>开课时间 <span class="required">*</span></label>
+                <input type="datetime-local" />
+              </div>
+              <div class="form-group">
+                <label>结课时间 <span class="required">*</span></label>
+                <input type="datetime-local" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>预计课时 <span class="required">*</span></label>
+                <input type="number" placeholder="请输入课时数" />
+              </div>
+              <div class="form-group">
+                <label>学分 <span class="required">*</span></label>
+                <input type="number" placeholder="请输入学分" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 加入权限 -->
+          <div class="form-section">
+            <h2 class="section-title">🔒 加入权限</h2>
+            <div class="permission-options">
+              <label class="permission-item">
+                <input type="radio" name="permission" value="open" checked />
+                <div class="permission-info">
+                  <div class="permission-title">公开课程</div>
+                  <div class="permission-desc">所有学生都可以自由加入课程</div>
+                </div>
+              </label>
+              <label class="permission-item">
+                <input type="radio" name="permission" value="apply" />
+                <div class="permission-info">
+                  <div class="permission-title">申请加入</div>
+                  <div class="permission-desc">学生需要提交申请，经您审核通过后方可加入</div>
+                </div>
+              </label>
+              <label class="permission-item">
+                <input type="radio" name="permission" value="code" />
+                <div class="permission-info">
+                  <div class="permission-title">邀请码加入</div>
+                  <div class="permission-desc">学生需要输入邀请码才能加入课程</div>
+                </div>
+              </label>
+              <label class="permission-item">
+                <input type="radio" name="permission" value="close" />
+                <div class="permission-info">
+                  <div class="permission-title">暂不开放</div>
+                  <div class="permission-desc">暂时不允许学生加入，您可以在之后修改此设置</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- 按钮 -->
+          <div class="form-actions">
+            <button type="button" class="btn-secondary">保存草稿</button>
+            <button type="submit" class="btn-primary">创建课程</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </body>
+</html>

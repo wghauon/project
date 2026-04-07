@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程学习 - Python程序设计基础</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+        }
+        /* 顶部导航 */
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+        }
+        .nav-menu a {
+            text-decoration: none;
+            color: #333;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            color: #667eea;
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        /* 主内容区 */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 20px;
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 24px;
+        }
+        /* 视频播放区 */
+        .video-section {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .video-player {
+            aspect-ratio: 16/9;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 64px;
+        }
+        .video-info {
+            padding: 24px;
+        }
+        .video-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        .video-meta {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .video-actions {
+            display: flex;
+            gap: 16px;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .action-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        .action-btn.liked {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #f44336;
+        }
+        /* 侧边栏 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .sidebar-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: bold;
+            color: #333;
+        }
+        .chapter-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .chapter-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .chapter-item:hover {
+            background: #f5f7fa;
+        }
+        .chapter-item.active {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+        }
+        .chapter-title {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .chapter-duration {
+            font-size: 12px;
+            color: #999;
+        }
+        /* 资料下载 */
+        .material-list {
+            padding: 12px 20px;
+        }
+        .material-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .material-item:last-child {
+            border-bottom: none;
+        }
+        .material-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .material-icon {
+            width: 40px;
+            height: 40px;
+            background: #f0f4ff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .material-name {
+            font-size: 14px;
+            color: #333;
+        }
+        .material-size {
+            font-size: 12px;
+            color: #999;
+        }
+        .btn-download {
+            padding: 6px 14px;
+            background: #f0f4ff;
+            color: #667eea;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        /* 评论区 */
+        .comment-section {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 24px;
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .comment-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .comment-count {
+            color: #999;
+            font-size: 14px;
+        }
+        .comment-input {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .comment-input textarea {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .comment-input textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn-submit {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            align-self: flex-start;
+        }
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .comment-item {
+            display: flex;
+            gap: 16px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .comment-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .comment-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .comment-content {
+            flex: 1;
+        }
+        .comment-author {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .comment-time {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        .comment-text {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .comment-actions {
+            display: flex;
+            gap: 16px;
+        }
+        .comment-action {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .comment-action:hover {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span>📚</span>
+                <span>智慧学堂</span>
+            </div>
+            <div class="nav-menu">
+                <a href="../common/index.html">课程广场</a>
+                <a href="my-courses.html" class="active">我的课程</a>
+                <a href="exams.html">考试中心</a>
+                <a href="../classroom/room-list.html">在线课堂</a>
+            </div>
+            <div class="nav-right">
+                <div class="user-info">
+                    <div class="avatar">张</div>
+                    <span>张三</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+        <!-- 视频区 -->
+        <div class="video-section">
+            <div class="video-player">
+                ▶️
+            </div>
+            <div class="video-info">
+                <h2 class="video-title">第3章：Python函数与模块 - 3.1 函数的定义与调用</h2>
+                <div class="video-meta">
+                    <span>👤 王教授</span>
+                    <span>⏱️ 45:30</span>
+                    <span>👁️ 1,234次观看</span>
+                    <span>📅 2024-03-15</span>
+                </div>
+                <div class="video-actions">
+                    <button class="action-btn liked">❤️ 已点赞 (256)</button>
+                    <button class="action-btn">⭐ 收藏</button>
+                    <button class="action-btn">↗️ 分享</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <!-- 章节列表 -->
+            <div class="sidebar-card">
+                <div class="card-header">📑 课程章节</div>
+                <div class="chapter-list">
+                    <div class="chapter-item">
+                        <div class="chapter-title">第1章：Python基础入门</div>
+                        <div class="chapter-duration">6课时 · 已完成</div>
+                    </div>
+                    <div class="chapter-item">
+                        <div class="chapter-title">第2章：数据类型与运算符</div>
+                        <div class="chapter-duration">8课时 · 已完成</div>
+                    </div>
+                    <div class="chapter-item active">
+                        <div class="chapter-title">第3章：函数与模块 - 3.1 函数定义</div>
+                        <div class="chapter-duration">正在学习 · 45:30</div>
+                    </div>
+                    <div class="chapter-item">
+                        <div class="chapter-title">3.2 函数参数与返回值</div>
+                        <div class="chapter-duration">38:20</div>
+                    </div>
+                    <div class="chapter-item">
+                        <div class="chapter-title">3.3 模块与包</div>
+                        <div class="chapter-duration">42:15</div>
+                    </div>
+                    <div class="chapter-item">
+                        <div class="chapter-title">第4章：面向对象编程</div>
+                        <div class="chapter-duration">10课时</div>
+                    </div>
+                    <div class="chapter-item">
+                        <div class="chapter-title">第5章：文件操作与异常处理</div>
+                        <div class="chapter-duration">6课时</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 学习资料 -->
+            <div class="sidebar-card">
+                <div class="card-header">📎 学习资料</div>
+                <div class="material-list">
+                    <div class="material-item">
+                        <div class="material-info">
+                            <div class="material-icon">📄</div>
+                            <div>
+                                <div class="material-name">Python基础教程.pdf</div>
+                                <div class="material-size">2.5 MB</div>
+                            </div>
+                        </div>
+                        <button class="btn-download">下载</button>
+                    </div>
+                    <div class="material-item">
+                        <div class="material-info">
+                            <div class="material-icon">📊</div>
+                            <div>
+                                <div class="material-name">课程PPT课件.pptx</div>
+                                <div class="material-size">15.8 MB</div>
+                            </div>
+                        </div>
+                        <button class="btn-download">下载</button>
+                    </div>
+                    <div class="material-item">
+                        <div class="material-info">
+                            <div class="material-icon">💻</div>
+                            <div>
+                                <div class="material-name">课后练习代码.zip</div>
+                                <div class="material-size">856 KB</div>
+                            </div>
+                        </div>
+                        <button class="btn-download">下载</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 评论区 -->
+        <div class="comment-section">
+            <div class="comment-header">
+                <h3 class="comment-title">💬 课程讨论</h3>
+                <span class="comment-count">共 128 条评论</span>
+            </div>
+            <div class="comment-input">
+                <textarea placeholder="分享你的学习心得或提出问题..."></textarea>
+                <button class="btn-submit">发表评论</button>
+            </div>
+            <div class="comment-list">
+                <div class="comment-item">
+                    <div class="comment-avatar">李</div>
+                    <div class="comment-content">
+                        <div class="comment-author">李四</div>
+                        <div class="comment-time">2小时前</div>
+                        <div class="comment-text">老师讲得很清晰，函数这部分终于理解了！特别是关于默认参数和可变参数的讲解，非常实用。</div>
+                        <div class="comment-actions">
+                            <span class="comment-action">👍 24</span>
+                            <span class="comment-action">💬 回复</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="comment-item">
+                    <div class="comment-avatar">王</div>
+                    <div class="comment-content">
+                        <div class="comment-author">王五</div>
+                        <div class="comment-time">5小时前</div>
+                        <div class="comment-text">请问老师，在函数内部修改全局变量时，为什么需要使用global关键字呢？</div>
+                        <div class="comment-actions">
+                            <span class="comment-action">👍 12</span>
+                            <span class="comment-action">💬 3条回复</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="comment-item">
+                    <div class="comment-avatar">赵</div>
+                    <div class="comment-content">
+                        <div class="comment-author">赵六</div>
+                        <div class="comment-time">昨天</div>
+                        <div class="comment-text">课后作业第三题有点难度，有没有同学分享一下思路？</div>
+                        <div class="comment-actions">
+                            <span class="comment-action">👍 8</span>
+                            <span class="comment-action">💬 5条回复</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,360 @@
+<template>
+  <!-- 主内容 -->
+  <main class="main-container">
+    <div class="page-header">
+      <h1 class="page-title">👥 用户管理</h1>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-tabs">
+        <button class="active">全部用户</button>
+        <button>学生</button>
+        <button>教师</button>
+        <button>管理员</button>
+      </div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="搜索用户名、学号、邮箱..." />
+      </div>
+      <button class="btn-primary">➕ 添加用户</button>
+    </div>
+
+    <div class="user-table-container">
+      <div class="table-header">
+        <span class="table-info">共 3,042 名用户</span>
+        <div class="table-actions">
+          <button class="btn-secondary">📥 批量导入</button>
+          <button class="btn-secondary">📤 导出名单</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>用户信息</th>
+            <th>学号/工号</th>
+            <th>角色</th>
+            <th>院系</th>
+            <th>状态</th>
+            <th>注册时间</th>
+            <th>最后登录</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="user-info-cell">
+                <div class="user-avatar">张</div>
+                <div>
+                  <div>张三</div>
+                  <div style="font-size: 12px; color: #999">zhangsan@edu.cn</div>
+                </div>
+              </div>
+            </td>
+            <td>2021010001</td>
+            <td><span class="role-badge student">学生</span></td>
+            <td>计算机学院</td>
+            <td><span class="status-badge active">正常</span></td>
+            <td>2024-02-15</td>
+            <td>2024-03-24 14:30</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon">编辑</button>
+                <button class="btn-icon">重置密码</button>
+                <button class="btn-icon">禁用</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="user-info-cell">
+                <div class="user-avatar">李</div>
+                <div>
+                  <div>李四</div>
+                  <div style="font-size: 12px; color: #999">lisi@edu.cn</div>
+                </div>
+              </div>
+            </td>
+            <td>2021010002</td>
+            <td><span class="role-badge student">学生</span></td>
+            <td>软件学院</td>
+            <td><span class="status-badge active">正常</span></td>
+            <td>2024-02-16</td>
+            <td>2024-03-24 10:15</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon">编辑</button>
+                <button class="btn-icon">重置密码</button>
+                <button class="btn-icon">禁用</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="user-info-cell">
+                <div class="user-avatar">王</div>
+                <div>
+                  <div>王教授</div>
+                  <div style="font-size: 12px; color: #999">wang@edu.cn</div>
+                </div>
+              </div>
+            </td>
+            <td>T2021001</td>
+            <td><span class="role-badge teacher">教师</span></td>
+            <td>计算机学院</td>
+            <td><span class="status-badge active">正常</span></td>
+            <td>2023-09-01</td>
+            <td>2024-03-24 16:45</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon">编辑</button>
+                <button class="btn-icon">重置密码</button>
+                <button class="btn-icon">禁用</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="user-info-cell">
+                <div class="user-avatar">赵</div>
+                <div>
+                  <div>赵六</div>
+                  <div style="font-size: 12px; color: #999">zhaoliu@edu.cn</div>
+                </div>
+              </div>
+            </td>
+            <td>2021010004</td>
+            <td><span class="role-badge student">学生</span></td>
+            <td>数学学院</td>
+            <td><span class="status-badge inactive">已禁用</span></td>
+            <td>2024-02-18</td>
+            <td>2024-03-20 09:00</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon">编辑</button>
+                <button class="btn-icon">重置密码</button>
+                <button class="btn-icon">启用</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <button>上一页</button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>4</button>
+        <button>5</button>
+        <button>下一页</button>
+      </div>
+    </div>
+  </main>
+</template>
+<style scoped>
+/* 主内容 */
+.main-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+/* 筛选栏 */
+.filter-bar {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+}
+.filter-tabs button {
+  padding: 10px 20px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.filter-tabs button.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+.search-box {
+  position: relative;
+  margin-left: auto;
+}
+.search-box input {
+  width: 280px;
+  padding: 10px 16px 10px 40px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.btn-primary {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+/* 用户表格 */
+.user-table-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.table-info {
+  color: #666;
+  font-size: 14px;
+}
+.table-actions {
+  display: flex;
+  gap: 12px;
+}
+.btn-secondary {
+  padding: 10px 20px;
+  background: #f5f7fa;
+  color: #667eea;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th,
+td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+th {
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+  background: #f5f7fa;
+}
+td {
+  color: #333;
+  font-size: 14px;
+}
+tr:hover {
+  background: #f5f7fa;
+}
+.user-info-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+.role-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.role-badge.student {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+.role-badge.teacher {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+.role-badge.admin {
+  background: #f3e5f5;
+  color: #9c27b0;
+}
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.status-badge.active {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+.status-badge.inactive {
+  background: #ffebee;
+  color: #f44336;
+}
+.action-btns {
+  display: flex;
+  gap: 8px;
+}
+.btn-icon {
+  padding: 6px 12px;
+  background: #f5f7fa;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+/* 分页 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+.pagination button {
+  padding: 10px 16px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.pagination button.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+</style>

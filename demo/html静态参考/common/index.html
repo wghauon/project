@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>首页 - 在线教育平台</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: #f5f7fa;
+      }
+      /* 顶部导航 */
+      .navbar {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .nav-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #667eea;
+      }
+      .nav-menu {
+        display: flex;
+        gap: 32px;
+      }
+      .nav-menu a {
+        text-decoration: none;
+        color: #333;
+        font-size: 15px;
+        font-weight: 500;
+        transition: color 0.3s;
+      }
+      .nav-menu a:hover,
+      .nav-menu a.active {
+        color: #667eea;
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .search-box {
+        position: relative;
+      }
+      .search-box input {
+        width: 280px;
+        padding: 10px 40px 10px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 24px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+      .search-box input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      .search-box button {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
+      /* 搜索筛选区 */
+      .search-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 20px;
+      }
+      .search-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .search-title {
+        color: white;
+        font-size: 28px;
+        margin-bottom: 24px;
+        text-align: center;
+      }
+      .filter-bar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .filter-group label {
+        font-size: 14px;
+        color: #666;
+        font-weight: 500;
+      }
+      .filter-group select {
+        padding: 10px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        min-width: 140px;
+      }
+      .filter-group select:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      .btn-search {
+        padding: 10px 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-left: auto;
+      }
+      /* 课程列表 */
+      .content-section {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .section-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+      }
+      .view-options {
+        display: flex;
+        gap: 12px;
+      }
+      .view-options button {
+        padding: 8px 16px;
+        border: 2px solid #e0e0e0;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s;
+      }
+      .view-options button.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+      .course-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+      }
+      .course-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition:
+          transform 0.3s,
+          box-shadow 0.3s;
+        cursor: pointer;
+      }
+      .course-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      }
+      .course-cover {
+        height: 180px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 48px;
+      }
+      .course-info {
+        padding: 20px;
+      }
+      .course-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+        line-height: 1.4;
+      }
+      .course-teacher {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+      .course-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        color: #999;
+      }
+      .course-tag {
+        padding: 4px 10px;
+        background: #f0f4ff;
+        color: #667eea;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      /* 分页 */
+      .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 40px;
+      }
+      .pagination button {
+        padding: 10px 16px;
+        border: 2px solid #e0e0e0;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s;
+      }
+      .pagination button.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+      .pagination button:hover:not(.active) {
+        border-color: #667eea;
+        color: #667eea;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="logo">
+          <span>📚</span>
+          <span>智慧学堂</span>
+        </div>
+        <div class="nav-menu">
+          <a href="index.html" class="active">课程广场</a>
+          <a href="../student/my-courses.html">我的课程</a>
+          <a href="../student/exams.html">考试中心</a>
+          <a href="../classroom/room-list.html">在线课堂</a>
+        </div>
+        <div class="nav-right">
+          <div class="search-box">
+            <input type="text" placeholder="搜索课程..." />
+            <button>🔍</button>
+          </div>
+          <div class="user-info">
+            <div class="avatar">张</div>
+            <span>张三</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 搜索筛选区 -->
+    <section class="search-section">
+      <div class="search-container">
+        <h2 class="search-title">🔍 发现优质课程</h2>
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label>学科分类</label>
+            <select>
+              <option value="">全部学科</option>
+              <option value="cs">计算机科学</option>
+              <option value="math">数学</option>
+              <option value="physics">物理</option>
+              <option value="chemistry">化学</option>
+              <option value="literature">文学</option>
+              <option value="language">语言</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>课程类型</label>
+            <select>
+              <option value="">全部类型</option>
+              <option value="required">必修课</option>
+              <option value="elective">选修课</option>
+              <option value="public">公共课</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>难度等级</label>
+            <select>
+              <option value="">全部难度</option>
+              <option value="beginner">入门级</option>
+              <option value="intermediate">进阶级</option>
+              <option value="advanced">高级</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>开课状态</label>
+            <select>
+              <option value="">全部状态</option>
+              <option value="ongoing">进行中</option>
+              <option value="upcoming">即将开课</option>
+              <option value="finished">已结束</option>
+            </select>
+          </div>
+          <button class="btn-search">筛选课程</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 课程列表 -->
+    <section class="content-section">
+      <div class="section-header">
+        <h3 class="section-title">📖 热门课程</h3>
+        <div class="view-options">
+          <button class="active">综合排序</button>
+          <button>最新发布</button>
+          <button>最多人学</button>
+          <button>评分最高</button>
+        </div>
+      </div>
+      <div class="course-grid">
+        <div class="course-card">
+          <div class="course-cover">💻</div>
+          <div class="course-info">
+            <h4 class="course-title">Python程序设计基础</h4>
+            <p class="course-teacher">👤 王教授 · 计算机学院</p>
+            <div class="course-meta">
+              <span>👥 1,234人在学</span>
+              <span class="course-tag">计算机</span>
+            </div>
+          </div>
+        </div>
+        <div class="course-card">
+          <div
+            class="course-cover"
+            style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+          >
+            📊
+          </div>
+          <div class="course-info">
+            <h4 class="course-title">数据结构与算法</h4>
+            <p class="course-teacher">👤 李老师 · 软件学院</p>
+            <div class="course-meta">
+              <span>👥 892人在学</span>
+              <span class="course-tag">计算机</span>
+            </div>
+          </div>
+        </div>
+        <div class="course-card">
+          <div
+            class="course-cover"
+            style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+          >
+            🧮
+          </div>
+          <div class="course-info">
+            <h4 class="course-title">高等数学（上）</h4>
+            <p class="course-teacher">👤 张教授 · 数学学院</p>
+            <div class="course-meta">
+              <span>👥 2,156人在学</span>
+              <span class="course-tag">数学</span>
+            </div>
+          </div>
+        </div>
+        <div class="course-card">
+          <div
+            class="course-cover"
+            style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+          >
+            🌐
+          </div>
+          <div class="course-info">
+            <h4 class="course-title">Web前端开发技术</h4>
+            <p class="course-teacher">👤 陈老师 · 信息学院</p>
+            <div class="course-meta">
+              <span>👥 756人在学</span>
+              <span class="course-tag">计算机</span>
+            </div>
+          </div>
+        </div>
+        <div class="course-card">
+          <div
+            class="course-cover"
+            style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+          >
+            🤖
+          </div>
+          <div class="course-info">
+            <h4 class="course-title">人工智能导论</h4>
+            <p class="course-teacher">👤 刘教授 · 人工智能学院</p>
+            <div class="course-meta">
+              <span>👥 1,567人在学</span>
+              <span class="course-tag">AI</span>
+            </div>
+          </div>
+        </div>
+        <div class="course-card">
+          <div
+            class="course-cover"
+            style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
+          >
+            📱
+          </div>
+          <div class="course-info">
+            <h4 class="course-title">移动应用开发</h4>
+            <p class="course-teacher">👤 赵老师 · 软件学院</p>
+            <div class="course-meta">
+              <span>👥 543人在学</span>
+              <span class="course-tag">计算机</span>
+            </div>
+          </div>
+        </div>
+        <div class="course-card">
+          <div
+            class="course-cover"
+            style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)"
+          >
+            🎨
+          </div>
+          <div class="course-info">
+            <h4 class="course-title">UI/UX设计基础</h4>
+            <p class="course-teacher">👤 孙老师 · 艺术学院</p>
+            <div class="course-meta">
+              <span>👥 432人在学</span>
+              <span class="course-tag">设计</span>
+            </div>
+          </div>
+        </div>
+        <div class="course-card">
+          <div
+            class="course-cover"
+            style="background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)"
+          >
+            📈
+          </div>
+          <div class="course-info">
+            <h4 class="course-title">数据库原理与应用</h4>
+            <p class="course-teacher">👤 周教授 · 计算机学院</p>
+            <div class="course-meta">
+              <span>👥 987人在学</span>
+              <span class="course-tag">计算机</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pagination">
+        <button>上一页</button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>4</button>
+        <button>5</button>
+        <button>下一页</button>
+      </div>
+    </section>
+  </body>
+</html>

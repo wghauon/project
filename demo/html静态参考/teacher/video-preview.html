@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>视频预览 - 1.1 Python简介与安装</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: #1a1a1a;
+        height: 100vh;
+        overflow: hidden;
+      }
+      /* 顶部栏 */
+      .preview-header {
+        background: #2d2d2d;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        border-bottom: 1px solid #3d3d3d;
+      }
+      .preview-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .back-btn {
+        padding: 8px 16px;
+        background: #3d3d3d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .video-title {
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .preview-actions {
+        display: flex;
+        gap: 12px;
+      }
+      .btn-header {
+        padding: 8px 16px;
+        background: #3d3d3d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .btn-edit {
+        padding: 8px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      /* 主内容区 */
+      .preview-container {
+        display: flex;
+        height: calc(100vh - 56px);
+      }
+      /* 视频区 */
+      .video-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .video-player {
+        flex: 1;
+        background: #0d0d0d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .video-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 64px;
+      }
+      .play-overlay {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        background: rgba(102, 126, 234, 0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 32px;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+      .play-overlay:hover {
+        transform: scale(1.1);
+      }
+      /* 播放控制栏 */
+      .video-controls {
+        height: 60px;
+        background: #2d2d2d;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        gap: 16px;
+      }
+      .control-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 8px;
+      }
+      .progress-bar {
+        flex: 1;
+        height: 4px;
+        background: #3d3d3d;
+        border-radius: 2px;
+        cursor: pointer;
+        position: relative;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 35%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        border-radius: 2px;
+      }
+      .time-display {
+        color: #999;
+        font-size: 13px;
+        min-width: 100px;
+        text-align: center;
+      }
+      .volume-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .volume-slider {
+        width: 80px;
+        height: 4px;
+        background: #3d3d3d;
+        border-radius: 2px;
+      }
+      .volume-fill {
+        width: 60%;
+        height: 100%;
+        background: white;
+        border-radius: 2px;
+      }
+      /* 侧边信息栏 */
+      .info-sidebar {
+        width: 360px;
+        background: #2d2d2d;
+        border-left: 1px solid #3d3d3d;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .info-section {
+        padding: 20px;
+        border-bottom: 1px solid #3d3d3d;
+      }
+      .info-title {
+        font-size: 14px;
+        color: #999;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+      }
+      .info-content {
+        color: white;
+      }
+      .video-name {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      .video-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 13px;
+        color: #999;
+        margin-bottom: 12px;
+      }
+      .video-desc {
+        font-size: 14px;
+        line-height: 1.6;
+        color: #ccc;
+      }
+      /* 统计信息 */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      .stat-item {
+        background: #3d3d3d;
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: #667eea;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+      }
+      /* 标签 */
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .tag {
+        padding: 6px 12px;
+        background: #3d3d3d;
+        color: #ccc;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      /* 章节导航 */
+      .chapter-nav {
+        flex: 1;
+        overflow-y: auto;
+      }
+      .chapter-item {
+        padding: 12px 20px;
+        border-bottom: 1px solid #3d3d3d;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      .chapter-item:hover {
+        background: #3d3d3d;
+      }
+      .chapter-item.active {
+        background: #667eea;
+      }
+      .chapter-name {
+        color: white;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      .chapter-duration {
+        color: #999;
+        font-size: 12px;
+      }
+      .chapter-item.active .chapter-duration {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 顶部栏 -->
+    <header class="preview-header">
+      <div class="preview-info">
+        <button class="back-btn">← 返回视频管理</button>
+        <h1 class="video-title">1.1 Python简介与安装</h1>
+      </div>
+      <div class="preview-actions">
+        <button class="btn-header">📊 查看数据</button>
+        <button class="btn-edit">✏️ 编辑视频</button>
+      </div>
+    </header>
+
+    <!-- 主内容 -->
+    <div class="preview-container">
+      <!-- 视频区 -->
+      <div class="video-area">
+        <div class="video-player">
+          <div class="video-placeholder">🎬</div>
+          <div class="play-overlay">▶</div>
+        </div>
+        <div class="video-controls">
+          <button class="control-btn">▶</button>
+          <button class="control-btn">⏭</button>
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+          <span class="time-display">05:23 / 15:30</span>
+          <div class="volume-control">
+            <button class="control-btn">🔊</button>
+            <div class="volume-slider">
+              <div class="volume-fill"></div>
+            </div>
+          </div>
+          <button class="control-btn">⚙</button>
+          <button class="control-btn">⛶</button>
+        </div>
+      </div>
+
+      <!-- 侧边信息栏 -->
+      <aside class="info-sidebar">
+        <div class="info-section">
+          <div class="info-content">
+            <h2 class="video-name">1.1 Python简介与安装</h2>
+            <div class="video-meta">
+              <span>📅 2024-03-15</span>
+              <span>⏱️ 15:30</span>
+            </div>
+            <p class="video-desc">
+              本节课介绍Python语言的发展历程、特点和应用领域，并详细讲解如何在Windows、Mac和Linux系统上安装Python开发环境。
+            </p>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h3 class="info-title">📊 数据统计</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value">1,234</div>
+              <div class="stat-label">播放次数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">89%</div>
+              <div class="stat-label">完播率</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">45</div>
+              <div class="stat-label">评论数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">156</div>
+              <div class="stat-label">点赞数</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h3 class="info-title">🏷️ 标签</h3>
+          <div class="tag-list">
+            <span class="tag">Python</span>
+            <span class="tag">入门</span>
+            <span class="tag">环境搭建</span>
+            <span class="tag">基础</span>
+          </div>
+        </div>
+
+        <div class="chapter-nav">
+          <div class="info-section" style="border-bottom: none">
+            <h3 class="info-title">📑 本章课时</h3>
+          </div>
+          <div class="chapter-item active">
+            <div class="chapter-name">1.1 Python简介与安装</div>
+            <div class="chapter-duration">⏱️ 15:30</div>
+          </div>
+          <div class="chapter-item">
+            <div class="chapter-name">1.2 第一个Python程序</div>
+            <div class="chapter-duration">⏱️ 20:15</div>
+          </div>
+          <div class="chapter-item">
+            <div class="chapter-name">1.3 基础语法</div>
+            <div class="chapter-duration">⏱️ 25:00</div>
+          </div>
+          <div class="chapter-item">
+            <div class="chapter-name">1.4 变量与数据类型</div>
+            <div class="chapter-duration">⏱️ 18:30</div>
+          </div>
+          <div class="chapter-item">
+            <div class="chapter-name">1.5 运算符</div>
+            <div class="chapter-duration">⏱️ 22:45</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

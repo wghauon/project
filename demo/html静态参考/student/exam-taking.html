@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>正在考试 - Python程序设计期中考试</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: #f5f7fa;
+        height: 100vh;
+        overflow: hidden;
+      }
+      /* 顶部栏 */
+      .exam-header {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+      }
+      .exam-title-bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .exam-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+      .exam-course {
+        color: #667eea;
+        font-size: 14px;
+      }
+      .exam-timer {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 20px;
+        background: #fff3e0;
+        border-radius: 8px;
+      }
+      .timer-label {
+        font-size: 13px;
+        color: #666;
+      }
+      .timer-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: #ff9800;
+        font-family: monospace;
+      }
+      .btn-submit-exam {
+        padding: 10px 24px;
+        background: #f44336;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      /* 主内容区 */
+      .exam-container {
+        display: flex;
+        height: calc(100vh - 64px);
+      }
+      /* 左侧题目区 */
+      .question-area {
+        flex: 1;
+        padding: 24px;
+        overflow-y: auto;
+      }
+      .question-card {
+        background: white;
+        border-radius: 12px;
+        padding: 32px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .question-number {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+      }
+      .question-type {
+        padding: 4px 12px;
+        background: #f0f4ff;
+        color: #667eea;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      .question-content {
+        font-size: 16px;
+        color: #333;
+        line-height: 1.8;
+        margin-bottom: 24px;
+      }
+      .options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .option-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        background: #f5f7fa;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .option-item:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+      .option-item.selected {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+      .option-label {
+        width: 28px;
+        height: 28px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #666;
+        flex-shrink: 0;
+      }
+      .option-item.selected .option-label {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+      }
+      .option-text {
+        flex: 1;
+        font-size: 15px;
+        color: #333;
+        line-height: 1.6;
+      }
+      /* 填空题 */
+      .fill-blank-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 15px;
+      }
+      .fill-blank-input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      /* 右侧答题卡 */
+      .answer-sheet {
+        width: 280px;
+        background: white;
+        border-left: 1px solid #e0e0e0;
+        padding: 20px;
+        overflow-y: auto;
+      }
+      .sheet-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 16px;
+      }
+      .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: #666;
+      }
+      .progress-bar {
+        height: 8px;
+        background: #e0e0e0;
+        border-radius: 4px;
+        margin-bottom: 24px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 35%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+      }
+      .question-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      .question-num {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f7fa;
+        border: 2px solid transparent;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .question-num:hover {
+        border-color: #667eea;
+      }
+      .question-num.answered {
+        background: #e8f5e9;
+        border-color: #4caf50;
+        color: #4caf50;
+      }
+      .question-num.current {
+        background: #667eea;
+        color: white;
+      }
+      .legend {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        font-size: 13px;
+        color: #666;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .legend-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+      }
+      .legend-dot.answered {
+        background: #e8f5e9;
+        border: 2px solid #4caf50;
+      }
+      .legend-dot.unanswered {
+        background: #f5f7fa;
+        border: 2px solid #e0e0e0;
+      }
+      .legend-dot.current {
+        background: #667eea;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 顶部栏 -->
+    <header class="exam-header">
+      <div class="exam-title-bar">
+        <h1 class="exam-title">Python程序设计期中考试</h1>
+        <span class="exam-course">Python程序设计基础</span>
+      </div>
+      <div class="exam-timer">
+        <span class="timer-label">⏱️ 剩余时间</span>
+        <span class="timer-value">85:32</span>
+      </div>
+      <button class="btn-submit-exam">交卷</button>
+    </header>
+
+    <!-- 主内容 -->
+    <div class="exam-container">
+      <!-- 左侧题目区 -->
+      <div class="question-area">
+        <!-- 单选题 -->
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">第 1 题</span>
+            <span class="question-type">单选题</span>
+          </div>
+          <div class="question-content">在Python中，以下哪个函数用于获取列表的长度？</div>
+          <div class="options-list">
+            <div class="option-item selected">
+              <span class="option-label">A</span>
+              <span class="option-text">len()</span>
+            </div>
+            <div class="option-item">
+              <span class="option-label">B</span>
+              <span class="option-text">size()</span>
+            </div>
+            <div class="option-item">
+              <span class="option-label">C</span>
+              <span class="option-text">length()</span>
+            </div>
+            <div class="option-item">
+              <span class="option-label">D</span>
+              <span class="option-text">count()</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 多选题 -->
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">第 2 题</span>
+            <span class="question-type">多选题</span>
+          </div>
+          <div class="question-content">以下哪些是Python中的可变数据类型？（多选）</div>
+          <div class="options-list">
+            <div class="option-item selected">
+              <span class="option-label">A</span>
+              <span class="option-text">列表（list）</span>
+            </div>
+            <div class="option-item">
+              <span class="option-label">B</span>
+              <span class="option-text">元组（tuple）</span>
+            </div>
+            <div class="option-item selected">
+              <span class="option-label">C</span>
+              <span class="option-text">字典（dict）</span>
+            </div>
+            <div class="option-item">
+              <span class="option-label">D</span>
+              <span class="option-text">字符串（str）</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 判断题 -->
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">第 3 题</span>
+            <span class="question-type">判断题</span>
+          </div>
+          <div class="question-content">
+            Python中的字典是通过键值对（key-value）来存储数据的，键必须是唯一的。
+          </div>
+          <div class="options-list">
+            <div class="option-item selected">
+              <span class="option-label">A</span>
+              <span class="option-text">正确</span>
+            </div>
+            <div class="option-item">
+              <span class="option-label">B</span>
+              <span class="option-text">错误</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 填空题 -->
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">第 4 题</span>
+            <span class="question-type">填空题</span>
+          </div>
+          <div class="question-content">在Python中，使用 ______ 关键字可以定义一个函数。</div>
+          <input type="text" class="fill-blank-input" placeholder="请输入答案" />
+        </div>
+      </div>
+
+      <!-- 右侧答题卡 -->
+      <aside class="answer-sheet">
+        <h3 class="sheet-title">📋 答题卡</h3>
+        <div class="progress-info">
+          <span>已答：18/50</span>
+          <span>36%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+        <div class="question-grid">
+          <div class="question-num answered">1</div>
+          <div class="question-num answered">2</div>
+          <div class="question-num answered">3</div>
+          <div class="question-num current">4</div>
+          <div class="question-num">5</div>
+          <div class="question-num">6</div>
+          <div class="question-num">7</div>
+          <div class="question-num">8</div>
+          <div class="question-num">9</div>
+          <div class="question-num">10</div>
+          <div class="question-num">11</div>
+          <div class="question-num">12</div>
+          <div class="question-num">13</div>
+          <div class="question-num">14</div>
+          <div class="question-num">15</div>
+          <div class="question-num">16</div>
+          <div class="question-num">17</div>
+          <div class="question-num">18</div>
+          <div class="question-num">19</div>
+          <div class="question-num">20</div>
+          <div class="question-num">21</div>
+          <div class="question-num">22</div>
+          <div class="question-num">23</div>
+          <div class="question-num">24</div>
+          <div class="question-num">25</div>
+          <div class="question-num">26</div>
+          <div class="question-num">27</div>
+          <div class="question-num">28</div>
+          <div class="question-num">29</div>
+          <div class="question-num">30</div>
+          <div class="question-num">31</div>
+          <div class="question-num">32</div>
+          <div class="question-num">33</div>
+          <div class="question-num">34</div>
+          <div class="question-num">35</div>
+          <div class="question-num">36</div>
+          <div class="question-num">37</div>
+          <div class="question-num">38</div>
+          <div class="question-num">39</div>
+          <div class="question-num">40</div>
+          <div class="question-num">41</div>
+          <div class="question-num">42</div>
+          <div class="question-num">43</div>
+          <div class="question-num">44</div>
+          <div class="question-num">45</div>
+          <div class="question-num">46</div>
+          <div class="question-num">47</div>
+          <div class="question-num">48</div>
+          <div class="question-num">49</div>
+          <div class="question-num">50</div>
+        </div>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-dot answered"></span>
+            <span>已作答</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot unanswered"></span>
+            <span>未作答</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot current"></span>
+            <span>当前题</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

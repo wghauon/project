@@ -1,0 +1,256 @@
+<script setup>
+import { registerService } from '@/api/login'
+import { ref } from 'vue'
+// 收集表单信息
+let username, real_name, user_no, phone, email, password, department
+const role = ref(1)
+// 切换身份
+function selectRole(r) {
+  role.value = r
+}
+// 注册函数
+async function register(username, real_name, user_no, phone, email, password, department, role) {
+  const res = await registerService(
+    username,
+    real_name,
+    user_no,
+    phone,
+    email,
+    password,
+    department,
+    role,
+  )
+  console.log(res)
+}
+</script>
+<template>
+  <div class="register-page">
+    <div class="register-container">
+      <div class="logo">
+        <h1>📚 智慧学堂</h1>
+        <p>创建新账号</p>
+      </div>
+      <form>
+        <div class="form-group">
+          <label>注册身份</label>
+          <div class="role-select">
+            <div class="role-option" :class="{ active: role === 1 }" @click="selectRole(1)">
+              <span>👨‍🎓</span>
+              <div>学生</div>
+            </div>
+            <div class="role-option" :class="{ active: role === 2 }" @click="selectRole(2)">
+              <span>👨‍🏫</span>
+              <div>教师</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <input
+              type="text"
+              id="username"
+              placeholder="请输入用户名"
+              v-model="username"
+              autocomplete="username"
+            />
+          </div>
+          <div class="form-group">
+            <label for="realname">真实姓名</label>
+            <input type="text" id="realname" placeholder="请输入真实姓名" v-model="real_name" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="studentId">学号/工号</label>
+            <input
+              type="text"
+              id="studentId"
+              placeholder="请输入学号或工号"
+              autocomplete="user_no"
+              v-model="user_no"
+            />
+          </div>
+          <div class="form-group">
+            <label for="phone">手机号码</label>
+            <input type="tel" id="phone" placeholder="请输入手机号" v-model="phone" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email">邮箱地址</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="请输入邮箱"
+            autocomplete="email"
+            v-model="email"
+          />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input
+              type="password"
+              id="password"
+              placeholder="设置密码（6-20位）"
+              v-model="password"
+              autocomplete="password"
+            />
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">确认密码</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              placeholder="再次输入密码"
+              autocomplete="password"
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="department">院系/部门</label>
+          <select id="department" v-model="department">
+            <option value="">请选择院系</option>
+            <option value="cs">计算机学院</option>
+            <option value="math">数学学院</option>
+            <option value="physics">物理学院</option>
+            <option value="chemistry">化学学院</option>
+            <option value="literature">文学院</option>
+            <option value="foreign">外语学院</option>
+          </select>
+        </div>
+        <button
+          type="button"
+          class="btn-register"
+          @click="register(username, real_name, user_no, phone, email, password, department, role)"
+        >
+          注 册
+        </button>
+        <div class="links">
+          已有账号？
+          <router-link to="/">立即登录</router-link>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.register-page {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.register-container {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 480px;
+}
+.logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.logo h1 {
+  color: #667eea;
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.logo p {
+  color: #666;
+  font-size: 14px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+.role-select {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.role-option {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.role-option:hover {
+  border-color: #667eea;
+}
+.role-option.active {
+  border-color: #667eea;
+  background: #f0f4ff;
+  color: #667eea;
+}
+.btn-register {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.btn-register:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+.links {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+}
+.links a {
+  color: #667eea;
+  text-decoration: none;
+}
+.links a:hover {
+  text-decoration: underline;
+}
+</style>

@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>添加章节 - 在线教育平台</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: #f5f7fa;
+      }
+      /* 顶部导航 */
+      .navbar {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .nav-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #667eea;
+      }
+      .nav-menu {
+        display: flex;
+        gap: 32px;
+      }
+      .nav-menu a {
+        text-decoration: none;
+        color: #333;
+        font-size: 15px;
+        font-weight: 500;
+        transition: color 0.3s;
+      }
+      .nav-menu a:hover,
+      .nav-menu a.active {
+        color: #667eea;
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
+      /* 主内容 */
+      .main-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 24px 20px;
+      }
+      /* 页面标题 */
+      .page-header {
+        margin-bottom: 24px;
+      }
+      .page-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+      }
+      .page-subtitle {
+        font-size: 14px;
+        color: #666;
+        margin-top: 8px;
+      }
+      /* 表单卡片 */
+      .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+      .form-section {
+        margin-bottom: 28px;
+      }
+      .form-section:last-child {
+        margin-bottom: 0;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group:last-child {
+        margin-bottom: 0;
+      }
+      .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 8px;
+      }
+      .form-label .required {
+        color: #f44336;
+        margin-left: 4px;
+      }
+      .form-input,
+      .form-textarea,
+      .form-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+      .form-input:focus,
+      .form-textarea:focus,
+      .form-select:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+      .form-hint {
+        font-size: 12px;
+        color: #999;
+        margin-top: 6px;
+      }
+      /* 章节序号选择 */
+      .chapter-number-options {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .chapter-number-option {
+        padding: 12px 24px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+      }
+      .chapter-number-option:hover {
+        border-color: #667eea;
+      }
+      .chapter-number-option.selected {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+      .chapter-number-option.custom {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .chapter-number-option.custom input {
+        width: 60px;
+        padding: 4px 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        text-align: center;
+      }
+      /* 开关 */
+      .switch-group {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        background: #f5f7fa;
+        border-radius: 8px;
+      }
+      .switch-label {
+        font-size: 14px;
+        color: #333;
+      }
+      .switch-label .sub {
+        font-size: 12px;
+        color: #999;
+        display: block;
+        margin-top: 4px;
+      }
+      .switch {
+        position: relative;
+        width: 50px;
+        height: 26px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 26px;
+      }
+      .slider:before {
+        position: absolute;
+        content: '';
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #667eea;
+      }
+      input:checked + .slider:before {
+        transform: translateX(24px);
+      }
+      /* 课时列表 */
+      .lesson-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .lesson-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: #f5f7fa;
+        border-radius: 8px;
+        border: 2px dashed #e0e0e0;
+      }
+      .lesson-number {
+        width: 32px;
+        height: 32px;
+        background: #667eea;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: bold;
+      }
+      .lesson-input {
+        flex: 1;
+      }
+      .lesson-input input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .lesson-type-select {
+        padding: 10px 14px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+      }
+      .btn-remove {
+        padding: 10px;
+        background: #ffebee;
+        color: #f44336;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .btn-add-lesson {
+        width: 100%;
+        padding: 14px;
+        background: white;
+        border: 2px dashed #667eea;
+        color: #667eea;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      /* 按钮组 */
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 2px solid #f0f0f0;
+      }
+      .btn-secondary {
+        padding: 12px 24px;
+        background: #f5f7fa;
+        color: #666;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .btn-primary {
+        padding: 12px 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="logo">
+          <span>📚</span>
+          <span>智慧学堂</span>
+        </div>
+        <div class="nav-menu">
+          <a href="my-teaching.html">我的教学</a>
+          <a href="course-manage.html" class="active">课程管理</a>
+          <a href="exam-manage.html">考试管理</a>
+          <a href="student-manage.html">学生管理</a>
+        </div>
+        <div class="nav-right">
+          <div class="user-info">
+            <div class="avatar">王</div>
+            <span>王教授</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+      <div class="page-header">
+        <h1 class="page-title">➕ 添加章节</h1>
+        <p class="page-subtitle">Python程序设计基础 - 为课程添加新章节和课时内容</p>
+      </div>
+
+      <div class="form-card">
+        <!-- 基本信息 -->
+        <div class="form-section">
+          <h2 class="section-title">📋 章节基本信息</h2>
+
+          <div class="form-group">
+            <label class="form-label">章节序号 <span class="required">*</span></label>
+            <div class="chapter-number-options">
+              <div class="chapter-number-option">第1章</div>
+              <div class="chapter-number-option">第2章</div>
+              <div class="chapter-number-option">第3章</div>
+              <div class="chapter-number-option selected">第4章</div>
+              <div class="chapter-number-option">第5章</div>
+              <div class="chapter-number-option custom">
+                自定义 <input type="number" placeholder="6" min="1" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">章节标题 <span class="required">*</span></label>
+            <input type="text" class="form-input" placeholder="请输入章节标题，如：面向对象编程" />
+            <p class="form-hint">建议标题简洁明了，不超过30个字符</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">章节简介</label>
+            <textarea
+              class="form-textarea"
+              placeholder="请输入章节内容简介，帮助学生了解本章学习目标..."
+            ></textarea>
+            <p class="form-hint">简要描述本章的主要内容和知识点</p>
+          </div>
+        </div>
+
+        <!-- 课时内容 -->
+        <div class="form-section">
+          <h2 class="section-title">📹 课时内容</h2>
+
+          <div class="lesson-list">
+            <div class="lesson-item">
+              <div class="lesson-number">1</div>
+              <div class="lesson-input">
+                <input type="text" placeholder="课时标题，如：类与对象的概念" />
+              </div>
+              <select class="lesson-type-select">
+                <option value="video">视频</option>
+                <option value="doc">文档</option>
+                <option value="quiz">测验</option>
+              </select>
+              <button class="btn-remove">🗑️</button>
+            </div>
+            <div class="lesson-item">
+              <div class="lesson-number">2</div>
+              <div class="lesson-input">
+                <input type="text" placeholder="课时标题" />
+              </div>
+              <select class="lesson-type-select">
+                <option value="video">视频</option>
+                <option value="doc">文档</option>
+                <option value="quiz">测验</option>
+              </select>
+              <button class="btn-remove">🗑️</button>
+            </div>
+          </div>
+
+          <button class="btn-add-lesson" style="margin-top: 12px">➕ 添加课时</button>
+        </div>
+
+        <!-- 发布设置 -->
+        <div class="form-section">
+          <h2 class="section-title">⚙️ 发布设置</h2>
+
+          <div class="switch-group">
+            <div class="switch-label">
+              立即发布
+              <span class="sub">开启后学生可立即查看本章内容</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="form-group" style="margin-top: 20px">
+            <label class="form-label">发布时间（可选）</label>
+            <input type="datetime-local" class="form-input" />
+            <p class="form-hint">设置定时发布时间，留空则立即发布</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">学习要求</label>
+            <select class="form-select">
+              <option value="">请选择学习要求</option>
+              <option value="optional">选修 - 学生可自由学习</option>
+              <option value="required" selected>必修 - 必须完成本章学习</option>
+              <option value="advanced">进阶 - 建议有基础后学习</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="form-actions">
+          <button class="btn-secondary">取消</button>
+          <button class="btn-secondary">保存为草稿</button>
+          <button class="btn-primary">✓ 确认添加</button>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,240 @@
+<template>
+  <!-- 主内容 -->
+  <main class="main-container">
+    <div class="page-header">
+      <h1 class="page-title">📢 公告管理</h1>
+      <button class="btn-primary">➕ 发布公告</button>
+    </div>
+
+    <div class="announcement-list">
+      <div class="announcement-card">
+        <div class="announcement-header">
+          <h3 class="announcement-title">关于系统维护的通知</h3>
+          <span class="announcement-type system">系统</span>
+        </div>
+        <p class="announcement-content">
+          为了提供更好的服务，系统将于本周六（3月30日）凌晨2:00-6:00进行例行维护。维护期间平台将无法访问，请提前安排好学习和教学工作。
+        </p>
+        <div class="announcement-footer">
+          <div class="announcement-meta">
+            <span>👤 系统管理员</span>
+            <span>📅 2024-03-25</span>
+            <span>👁️ 1,234次阅读</span>
+          </div>
+          <div class="announcement-actions">
+            <button class="btn-text">编辑</button>
+            <button class="btn-text">置顶</button>
+            <button class="btn-danger">删除</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="announcement-card">
+        <div class="announcement-header">
+          <h3 class="announcement-title">期中考试安排通知</h3>
+          <span class="announcement-type important">重要</span>
+        </div>
+        <p class="announcement-content">
+          本学期期中考试将于4月8日至4月12日进行，请各位同学提前做好准备。具体考试安排请查看个人考试中心。考试期间请遵守考场纪律，诚信应考。
+        </p>
+        <div class="announcement-footer">
+          <div class="announcement-meta">
+            <span>👤 教务处</span>
+            <span>📅 2024-03-20</span>
+            <span>👁️ 3,456次阅读</span>
+          </div>
+          <div class="announcement-actions">
+            <button class="btn-text">编辑</button>
+            <button class="btn-text">置顶</button>
+            <button class="btn-danger">删除</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="announcement-card">
+        <div class="announcement-header">
+          <h3 class="announcement-title">新增课程上线通知</h3>
+          <span class="announcement-type notice">通知</span>
+        </div>
+        <p class="announcement-content">
+          本学期新增多门优质课程已上线，包括《人工智能导论》、《区块链技术基础》、《数据可视化》等。欢迎同学们选课学习。
+        </p>
+        <div class="announcement-footer">
+          <div class="announcement-meta">
+            <span>👤 课程中心</span>
+            <span>📅 2024-03-15</span>
+            <span>👁️ 2,156次阅读</span>
+          </div>
+          <div class="announcement-actions">
+            <button class="btn-text">编辑</button>
+            <button class="btn-text">置顶</button>
+            <button class="btn-danger">删除</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="announcement-card">
+        <div class="announcement-header">
+          <h3 class="announcement-title">平台功能更新说明</h3>
+          <span class="announcement-type system">系统</span>
+        </div>
+        <p class="announcement-content">
+          平台已完成新一轮功能更新，新增在线流程图工具、优化了视频播放器、改进了作业提交体验。如有问题请及时反馈。
+        </p>
+        <div class="announcement-footer">
+          <div class="announcement-meta">
+            <span>👤 产品团队</span>
+            <span>📅 2024-03-10</span>
+            <span>👁️ 987次阅读</span>
+          </div>
+          <div class="announcement-actions">
+            <button class="btn-text">编辑</button>
+            <button class="btn-text">置顶</button>
+            <button class="btn-danger">删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pagination">
+      <button>上一页</button>
+      <button class="active">1</button>
+      <button>2</button>
+      <button>3</button>
+      <button>下一页</button>
+    </div>
+  </main>
+</template>
+<style scoped>
+/* 主内容 */
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+.btn-primary {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* 公告列表 */
+.announcement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.announcement-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.announcement-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+.announcement-type {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.announcement-type.system {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+.announcement-type.important {
+  background: #ffebee;
+  color: #f44336;
+}
+.announcement-type.notice {
+  background: #fff3e0;
+  color: #ff9800;
+}
+.announcement-content {
+  color: #666;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.announcement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+.announcement-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  color: #999;
+}
+.announcement-actions {
+  display: flex;
+  gap: 12px;
+}
+.btn-text {
+  padding: 6px 14px;
+  background: #f5f7fa;
+  color: #667eea;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-danger {
+  padding: 6px 14px;
+  background: #ffebee;
+  color: #f44336;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+/* 分页 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+.pagination button {
+  padding: 10px 16px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.pagination button.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+</style>

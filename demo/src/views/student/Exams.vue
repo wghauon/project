@@ -1,0 +1,347 @@
+<template>
+  <!-- 主内容 -->
+  <main class="main-container">
+    <div class="page-header">
+      <h1 class="page-title">📝 考试中心</h1>
+      <div class="filter-tabs">
+        <button class="active">全部</button>
+        <button>待考试</button>
+        <button>进行中</button>
+        <button>已结束</button>
+      </div>
+    </div>
+
+    <div class="exam-list">
+      <div class="exam-card">
+        <div class="exam-main">
+          <div class="exam-icon">📝</div>
+          <div class="exam-info">
+            <div class="exam-header">
+              <h3 class="exam-title">Python程序设计期中考试</h3>
+              <span class="status-badge ongoing">进行中</span>
+            </div>
+            <div class="exam-course">📖 Python程序设计基础</div>
+            <div class="exam-meta">
+              <span>⏱️ 考试时长：120分钟</span>
+              <span>📊 总分：100分</span>
+              <span>📝 题目：50道</span>
+              <span>⏰ 剩余时间：85分钟</span>
+            </div>
+          </div>
+        </div>
+        <div class="exam-actions">
+          <button class="btn-primary">继续考试</button>
+        </div>
+      </div>
+
+      <div class="exam-card">
+        <div class="exam-main">
+          <div
+            class="exam-icon"
+            style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+          >
+            📋
+          </div>
+          <div class="exam-info">
+            <div class="exam-header">
+              <h3 class="exam-title">数据结构单元测试</h3>
+              <span class="status-badge upcoming">待开始</span>
+            </div>
+            <div class="exam-course">📖 数据结构与算法</div>
+            <div class="exam-meta">
+              <span>⏱️ 考试时长：90分钟</span>
+              <span>📊 总分：100分</span>
+              <span>📝 题目：40道</span>
+              <span>📅 开始时间：3月25日 14:00</span>
+            </div>
+          </div>
+        </div>
+        <div class="exam-actions">
+          <div class="countdown">
+            <div class="countdown-label">距离开始</div>
+            <div class="countdown-value">2天 4小时</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="exam-card">
+        <div class="exam-main">
+          <div
+            class="exam-icon"
+            style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+          >
+            📊
+          </div>
+          <div class="exam-info">
+            <div class="exam-header">
+              <h3 class="exam-title">高等数学第一章测试</h3>
+              <span class="status-badge completed">已完成</span>
+            </div>
+            <div class="exam-course">📖 高等数学（上）</div>
+            <div class="exam-meta">
+              <span>⏱️ 用时：78分钟</span>
+              <span>📅 提交时间：3月18日</span>
+              <span>📊 班级排名：12/56</span>
+            </div>
+          </div>
+        </div>
+        <div class="exam-actions">
+          <div class="score-display">
+            <div class="score-label">考试成绩</div>
+            <div class="score-value">88<span class="score-total">/100</span></div>
+          </div>
+          <button class="btn-secondary">查看解析</button>
+        </div>
+      </div>
+
+      <div class="exam-card">
+        <div class="exam-main">
+          <div
+            class="exam-icon"
+            style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+          >
+            💻
+          </div>
+          <div class="exam-info">
+            <div class="exam-header">
+              <h3 class="exam-title">Web前端基础测验</h3>
+              <span class="status-badge missed">缺考</span>
+            </div>
+            <div class="exam-course">📖 Web前端开发技术</div>
+            <div class="exam-meta">
+              <span>⏱️ 考试时长：60分钟</span>
+              <span>📅 考试时间：3月15日 10:00</span>
+              <span>⚠️ 缺考原因：未按时参加</span>
+            </div>
+          </div>
+        </div>
+        <div class="exam-actions">
+          <button class="btn-secondary">申请补考</button>
+        </div>
+      </div>
+
+      <div class="exam-card">
+        <div class="exam-main">
+          <div
+            class="exam-icon"
+            style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+          >
+            📚
+          </div>
+          <div class="exam-info">
+            <div class="exam-header">
+              <h3 class="exam-title">大学英语词汇测试</h3>
+              <span class="status-badge completed">已完成</span>
+            </div>
+            <div class="exam-course">📖 大学英语（一）</div>
+            <div class="exam-meta">
+              <span>⏱️ 用时：45分钟</span>
+              <span>📅 提交时间：3月10日</span>
+              <span>📊 班级排名：5/48</span>
+            </div>
+          </div>
+        </div>
+        <div class="exam-actions">
+          <div class="score-display">
+            <div class="score-label">考试成绩</div>
+            <div class="score-value">95<span class="score-total">/100</span></div>
+          </div>
+          <button class="btn-secondary">查看解析</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+<style scoped>
+/* 主内容 */
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+}
+.filter-tabs button {
+  padding: 10px 20px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.filter-tabs button.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+/* 考试列表 */
+.exam-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.exam-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+}
+.exam-main {
+  display: flex;
+  gap: 20px;
+}
+.exam-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  flex-shrink: 0;
+}
+.exam-info {
+  flex: 1;
+}
+.exam-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.exam-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.status-badge.upcoming {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+.status-badge.ongoing {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+.status-badge.completed {
+  background: #f5f5f5;
+  color: #666;
+}
+.status-badge.missed {
+  background: #ffebee;
+  color: #f44336;
+}
+.exam-course {
+  color: #667eea;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.exam-meta {
+  display: flex;
+  gap: 24px;
+  font-size: 13px;
+  color: #666;
+}
+.exam-meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.exam-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+.btn-primary {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  min-width: 120px;
+}
+.btn-secondary {
+  padding: 12px 32px;
+  background: #f5f7fa;
+  color: #667eea;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  min-width: 120px;
+}
+.btn-disabled {
+  padding: 12px 32px;
+  background: #e0e0e0;
+  color: #999;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: not-allowed;
+  min-width: 120px;
+}
+.score-display {
+  text-align: center;
+  padding: 16px 32px;
+  background: #e8f5e9;
+  border-radius: 8px;
+}
+.score-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+.score-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #4caf50;
+}
+.score-total {
+  font-size: 14px;
+  color: #666;
+}
+.countdown {
+  text-align: center;
+  padding: 12px 24px;
+  background: #fff3e0;
+  border-radius: 8px;
+}
+.countdown-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+.countdown-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ff9800;
+}
+</style>

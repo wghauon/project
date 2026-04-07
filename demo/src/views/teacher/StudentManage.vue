@@ -1,0 +1,357 @@
+<script setup>
+import SearchBox from '@/components/SearchBox.vue'
+</script>
+<template>
+  <!-- 主内容 -->
+  <main class="main-container">
+    <div class="page-header">
+      <h1 class="page-title">👨‍🎓 学生管理</h1>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>课程</label>
+        <select>
+          <option value="">全部课程</option>
+          <option value="python">Python程序设计基础</option>
+          <option value="ds">数据结构与算法</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>状态</label>
+        <select>
+          <option value="">全部状态</option>
+          <option value="active">学习中</option>
+          <option value="inactive">已退出</option>
+        </select>
+      </div>
+      <SearchBox></SearchBox>
+    </div>
+
+    <div class="student-table-container">
+      <div class="table-header">
+        <span class="table-info">共 150 名学生</span>
+        <div class="table-actions">
+          <button class="btn-secondary">📥 导入学生</button>
+          <button class="btn-secondary">📤 导出名单</button>
+          <button class="btn-primary">➕ 添加学生</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>学生信息</th>
+            <th>学号</th>
+            <th>所在课程</th>
+            <th>学习进度</th>
+            <th>平均成绩</th>
+            <th>状态</th>
+            <th>加入时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="student-info">
+                <div class="student-avatar">张</div>
+                <span>张三</span>
+              </div>
+            </td>
+            <td>2021010001</td>
+            <td>Python程序设计基础</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 75%"></div>
+                </div>
+                <span>75%</span>
+              </div>
+            </td>
+            <td>88.5</td>
+            <td><span class="status-badge active">学习中</span></td>
+            <td>2024-02-20</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon">查看</button>
+                <button class="btn-icon">移除</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="student-info">
+                <div class="student-avatar">李</div>
+                <span>李四</span>
+              </div>
+            </td>
+            <td>2021010002</td>
+            <td>Python程序设计基础</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 92%"></div>
+                </div>
+                <span>92%</span>
+              </div>
+            </td>
+            <td>91.0</td>
+            <td><span class="status-badge active">学习中</span></td>
+            <td>2024-02-20</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon">查看</button>
+                <button class="btn-icon">移除</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="student-info">
+                <div class="student-avatar">王</div>
+                <span>王五</span>
+              </div>
+            </td>
+            <td>2021010003</td>
+            <td>数据结构与算法</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 45%"></div>
+                </div>
+                <span>45%</span>
+              </div>
+            </td>
+            <td>76.5</td>
+            <td><span class="status-badge active">学习中</span></td>
+            <td>2024-02-22</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon">查看</button>
+                <button class="btn-icon">移除</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="student-info">
+                <div class="student-avatar">赵</div>
+                <span>赵六</span>
+              </div>
+            </td>
+            <td>2021010004</td>
+            <td>Python程序设计基础</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 30%"></div>
+                </div>
+                <span>30%</span>
+              </div>
+            </td>
+            <td>-</td>
+            <td><span class="status-badge inactive">已退出</span></td>
+            <td>2024-02-20</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon">查看</button>
+                <button class="btn-icon">恢复</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <button>上一页</button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>4</button>
+        <button>5</button>
+        <button>下一页</button>
+      </div>
+    </div>
+  </main>
+</template>
+<style scoped>
+/* 主内容 */
+.main-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+/* 筛选栏 */
+.filter-bar {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-group label {
+  font-size: 14px;
+  color: #666;
+}
+.filter-group select,
+.filter-group input {
+  padding: 8px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+/* 学生表格 */
+.student-table-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.table-info {
+  color: #666;
+  font-size: 14px;
+}
+.table-actions {
+  display: flex;
+  gap: 12px;
+}
+.btn-primary {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-secondary {
+  padding: 10px 20px;
+  background: #f5f7fa;
+  color: #667eea;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th,
+td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+th {
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+  background: #f5f7fa;
+}
+td {
+  color: #333;
+  font-size: 14px;
+}
+tr:hover {
+  background: #f5f7fa;
+}
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.student-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+.progress-bar {
+  width: 100px;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.status-badge.active {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+.status-badge.inactive {
+  background: #ffebee;
+  color: #f44336;
+}
+.action-btns {
+  display: flex;
+  gap: 8px;
+}
+.btn-icon {
+  padding: 6px 12px;
+  background: #f5f7fa;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+/* 分页 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+.pagination button {
+  padding: 10px 16px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.pagination button.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+</style>
