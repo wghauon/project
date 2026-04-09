@@ -8,19 +8,47 @@ const role = ref(1)
 function selectRole(r) {
   role.value = r
 }
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
 // 注册函数
 async function register(username, real_name, user_no, phone, email, password, department, role) {
-  const res = await registerService(
-    username,
-    real_name,
-    user_no,
-    phone,
-    email,
-    password,
-    department,
-    role,
-  )
-  console.log(res)
+  // 表单验证
+  if (!username || !password) {
+    alert('用户名和密码不能为空')
+    return
+  }
+  if (!real_name) {
+    alert('请输入真实姓名')
+    return
+  }
+  if (!user_no) {
+    alert('请输入学号/工号')
+    return
+  }
+  
+  try {
+    const res = await registerService(
+      username,
+      real_name,
+      user_no,
+      phone,
+      email,
+      password,
+      department,
+      role,
+    )
+    
+    if (res.data.status === 0) {
+      alert('注册成功！即将跳转到登录页面')
+      router.push('/')
+    } else {
+      alert(res.data.message || '注册失败')
+    }
+  } catch (error) {
+    console.error('注册失败:', error)
+    alert('注册失败，请稍后重试')
+  }
 }
 </script>
 <template>

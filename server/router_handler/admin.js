@@ -86,8 +86,8 @@ exports.getUserList = async (req, res) => {
       params.push(parseInt(role))
     }
 
-    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    params.push(parseInt(pageSize), (parseInt(page) - 1) * parseInt(pageSize))
+    // sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    // params.push(parseInt(pageSize), (parseInt(page) - 1) * parseInt(pageSize))
 
     const [rows] = await db.execute(sql, params)
 

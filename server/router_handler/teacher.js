@@ -13,7 +13,6 @@ exports.course = async (req, res) => {
     if (!req.file) { return res.send({ message: '未选择图片'})}
     // 检查表单必要项是否填写
     const { course_name, category_name, course_type, difficulty, description, hours, credit, createPerson, status} = req.body
-    console.log({ course_name, category_name, course_type, difficulty, description, hours, credit, createPerson})
     if (!course_name || !category_name || !course_type || !difficulty || !description || !hours || !credit) {return res.send({ message: '课程信息填写不完全'})}
     // 获取协议,主机名和端口
     const protocol = req.protocol

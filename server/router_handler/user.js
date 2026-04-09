@@ -16,22 +16,22 @@ exports.register = async (req, res) => {
     if (rows.length > 0) { return res.send({ message: '用户名被占用'}) }
     // 根据身份插入新用户
     if ( role === 1 ) {
-      const [result] = await db.execute('insert into users (username, real_name, student_no, phone, email, password, department, role) values (?, ?, ?, ?, ?, ?, ?, ?)', [username, real_name, user_no, phone, email, password, department, role])
-      if (result.affectedRows !== 1) { return res.send({ message: '注册失败'}) }
+      const [result] = await db.execute('insert into users (username, real_name, student_no, phone, email, password, department, role, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, NOW())', [username, real_name, user_no, phone, email, password, department, role])
+      if (result.affectedRows !== 1) { return res.send({ status: 1, message: '注册失败'}) }
     }
     else if ( role === 2 ) {
-      const [result] = await db.execute('insert into users (username, real_name, teacher_no, phone, email, password, department, role) values (?, ?, ?, ?, ?, ?, ?, ?)', [username, real_name, user_no, phone, email, password, department, role])
-      if (result.affectedRows !== 1) { return res.send({ message: '注册失败'}) }
+      const [result] = await db.execute('insert into users (username, real_name, teacher_no, phone, email, password, department, role, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, NOW())', [username, real_name, user_no, phone, email, password, department, role])
+      if (result.affectedRows !== 1) { return res.send({ status: 1, message: '注册失败'}) }
     }
     else if ( role === 3 ) {
-      const [result] = await db.execute('insert into users (username, real_name, phone, email, password, department, role) values (?, ?, ?, ?, ?, ?, ?)', [username, real_name, phone, email, password, department, role])
-      if (result.affectedRows !== 1) { return res.send({ message: '注册失败'}) }
+      const [result] = await db.execute('insert into users (username, real_name, phone, email, password, department, role, created_at) values (?, ?, ?, ?, ?, ?, ?, NOW())', [username, real_name, phone, email, password, department, role])
+      if (result.affectedRows !== 1) { return res.send({ status: 1, message: '注册失败'}) }
     }
     else {
-      return res.send({ message: '没有指定注册身份'})
+      return res.send({ status: 1, message: '没有指定注册身份'})
     }
     // 注册成功
-    res.send({ message: '注册成功'})
+    res.send({ status: 0, message: '注册成功'})
   } 
   catch (err) {
     res.send({ message: err.message})
