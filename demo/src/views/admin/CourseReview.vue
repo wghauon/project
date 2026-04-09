@@ -1,3 +1,103 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { getPendingCourses, approveCourse, rejectCourse } from '@/api/admin'
+
+// 课程列表
+const courses = ref([])
+const loading = ref(false)
+
+// 获取待审核课程
+const fetchCourses = async () => {
+  loading.value = true
+  try {
+    const res = await getPendingCourses()
+    if (res.data.status === 0) {
+      courses.value = res.data.data || []
+    } else {
+      console.error('获取课程列表失败:', res.data.message)
+    }
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 通过课程
+const handleApprove = async (course) => {
+  const remark = prompt('请输入审核意见（可选）：')
+  if (remark === null) return
+  
+  try {
+    const res = await approveCourse(course.course_id, { review_remark: remark })
+    if (res.data.status === 0) {
+      alert('审核通过')
+      fetchCourses()
+    } else {
+      alert(res.data.message || '操作失败')
+    }
+  } catch (error) {
+    console.error('操作失败:', error)
+    alert('操作失败，请稍后重试')
+  }
+}
+
+// 拒绝课程
+const handleReject = async (course) => {
+  const remark = prompt('请输入拒绝原因：')
+  if (!remark) {
+    alert('请输入拒绝原因')
+    return
+  }
+  
+  try {
+    const res = await rejectCourse(course.course_id, { review_remark: remark })
+    if (res.data.status === 0) {
+      alert('已拒绝')
+      fetchCourses()
+    } else {
+      alert(res.data.message || '操作失败')
+    }
+  } catch (error) {
+    console.error('操作失败:', error)
+    alert('操作失败，请稍后重试')
+  }
+}
+
+// 查看详情
+const viewDetail = (course) => {
+  alert(`查看课程详情：${course.course_name}`)
+}
+
+// 获取难度文本
+const getDifficultyText = (difficulty) => {
+  const map = { 1: '入门级', 2: '初级', 3: '中级', 4: '高级' }
+  return map[difficulty] || '未知'
+}
+
+// 获取封面渐变
+const getCoverGradient = (index) => {
+  const gradients = [
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+  ]
+  return gradients[index % gradients.length]
+}
+
+// 获取图标
+const getIcon = (index) => {
+  const icons = ['🤖', '🧠', '☁️', '🔒', '💻', '📊', '🎨', '📱']
+  return icons[index % icons.length]
+}
+
+onMounted(() => {
+  fetchCourses()
+})
+</script>
+
 <template>
   <!-- 主内容 -->
   <main class="main-container">
@@ -8,120 +108,40 @@
     <div class="filter-bar">
       <div class="filter-tabs">
         <button class="active">待审核</button>
-        <button>已通过</button>
-        <button>已拒绝</button>
-      </div>
-      <div class="filter-group">
-        <select>
-          <option value="">全部分类</option>
-          <option value="cs">计算机科学</option>
-          <option value="math">数学</option>
-          <option value="physics">物理</option>
-        </select>
       </div>
     </div>
 
-    <div class="course-list">
-      <div class="course-card">
-        <div class="course-cover">🤖</div>
-        <div class="course-info">
-          <span class="status-badge pending">待审核</span>
-          <h3>机器学习基础</h3>
-          <div class="course-teacher">👤 李教授 · 计算机学院 · 提交于 2024-03-24</div>
-          <p class="course-desc">
-            本课程系统介绍机器学习的基本概念、算法原理和应用实践，包括监督学习、非监督学习、深度学习等内容。
-          </p>
-          <div class="course-meta">
-            <span>📊 难度：进阶级</span>
-            <span>⏱️ 48课时</span>
-            <span>👥 预计容量：100人</span>
-          </div>
-        </div>
-        <div class="course-actions">
-          <button class="btn-success">✓ 通过</button>
-          <button class="btn-danger">✗ 拒绝</button>
-          <button class="btn-secondary">查看详情</button>
-        </div>
-      </div>
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>正在加载课程...</p>
+    </div>
 
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
-        >
-          🧠
-        </div>
-        <div class="course-info">
-          <span class="status-badge pending">待审核</span>
-          <h3>深度学习入门</h3>
-          <div class="course-teacher">👤 张老师 · 人工智能学院 · 提交于 2024-03-23</div>
-          <p class="course-desc">
-            从神经网络基础到深度学习框架应用，循序渐进地学习深度学习技术，包含大量实战项目。
-          </p>
-          <div class="course-meta">
-            <span>📊 难度：高级</span>
-            <span>⏱️ 36课时</span>
-            <span>👥 预计容量：80人</span>
-          </div>
-        </div>
-        <div class="course-actions">
-          <button class="btn-success">✓ 通过</button>
-          <button class="btn-danger">✗ 拒绝</button>
-          <button class="btn-secondary">查看详情</button>
-        </div>
+    <div v-else class="course-list">
+      <div v-if="courses.length === 0" class="empty-state">
+        <div class="empty-icon">📚</div>
+        <p>暂无待审核课程</p>
       </div>
-
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
-        >
-          ☁️
+      
+      <div v-for="(course, index) in courses" :key="course.course_id" class="course-card">
+        <div class="course-cover" :style="{ background: getCoverGradient(index) }">
+          {{ getIcon(index) }}
         </div>
         <div class="course-info">
           <span class="status-badge pending">待审核</span>
-          <h3>云计算技术</h3>
-          <div class="course-teacher">👤 王教授 · 软件学院 · 提交于 2024-03-22</div>
-          <p class="course-desc">
-            介绍云计算的基本概念、服务模型和部署模式，涵盖AWS、Azure、阿里云等主流云平台的使用。
-          </p>
+          <h3>{{ course.course_name }}</h3>
+          <div class="course-teacher">👤 {{ course.teacher_name }} · {{ course.department }} · 提交于 {{ course.created_at }}</div>
+          <p class="course-desc">{{ course.description }}</p>
           <div class="course-meta">
-            <span>📊 难度：进阶级</span>
-            <span>⏱️ 32课时</span>
-            <span>👥 预计容量：120人</span>
+            <span>📊 难度：{{ getDifficultyText(course.difficulty) }}</span>
+            <span>⏱️ {{ course.duration || 0 }}课时</span>
+            <span>👥 预计容量：{{ course.capacity || 100 }}人</span>
           </div>
         </div>
         <div class="course-actions">
-          <button class="btn-success">✓ 通过</button>
-          <button class="btn-danger">✗ 拒绝</button>
-          <button class="btn-secondary">查看详情</button>
-        </div>
-      </div>
-
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
-        >
-          🔒
-        </div>
-        <div class="course-info">
-          <span class="status-badge pending">待审核</span>
-          <h3>网络安全基础</h3>
-          <div class="course-teacher">👤 陈老师 · 信息安全学院 · 提交于 2024-03-21</div>
-          <p class="course-desc">
-            学习网络安全的基本概念、常见攻击手段和防御技术，培养安全意识和防护能力。
-          </p>
-          <div class="course-meta">
-            <span>📊 难度：入门级</span>
-            <span>⏱️ 24课时</span>
-            <span>👥 预计容量：150人</span>
-          </div>
-        </div>
-        <div class="course-actions">
-          <button class="btn-success">✓ 通过</button>
-          <button class="btn-danger">✗ 拒绝</button>
-          <button class="btn-secondary">查看详情</button>
+          <button class="btn-success" @click="handleApprove(course)">✓ 通过</button>
+          <button class="btn-danger" @click="handleReject(course)">✗ 拒绝</button>
+          <button class="btn-secondary" @click="viewDetail(course)">查看详情</button>
         </div>
       </div>
     </div>

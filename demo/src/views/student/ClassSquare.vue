@@ -1,3 +1,115 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { getCourseList, joinCourse } from '@/api/student'
+
+const router = useRouter()
+const userStore = useUserStore()
+
+// 课程列表
+const courses = ref([])
+const loading = ref(false)
+
+// 筛选条件
+const filters = ref({
+  category: '',
+  type: '',
+  difficulty: '',
+  status: ''
+})
+
+// 排序方式
+const sortBy = ref('comprehensive')
+
+// 获取课程列表
+const fetchCourses = async () => {
+  loading.value = true
+  try {
+    const params = {}
+    if (filters.value.category) params.category = filters.value.category
+    if (filters.value.difficulty) params.difficulty = filters.value.difficulty
+    
+    const res = await getCourseList(params)
+    if (res.data.status === 0) {
+      courses.value = res.data.data || []
+    } else {
+      console.error('获取课程列表失败:', res.data.message)
+    }
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 筛选课程
+const filterCourses = () => {
+  fetchCourses()
+}
+
+// 排序课程
+const sortCourses = (type) => {
+  sortBy.value = type
+  // 根据排序方式重新排序
+  if (type === 'newest') {
+    courses.value.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  } else if (type === 'popular') {
+    courses.value.sort((a, b) => b.student_count - a.student_count)
+  }
+}
+
+// 加入课程
+const handleJoinCourse = async (course) => {
+  if (!userStore.token) {
+    alert('请先登录')
+    router.push('/')
+    return
+  }
+  try {
+    const res = await joinCourse({ course_id: course.course_id })
+    if (res.data.status === 0) {
+      alert(res.data.message)
+    } else {
+      alert(res.data.message || '加入课程失败')
+    }
+  } catch (error) {
+    console.error('加入课程失败:', error)
+    alert('加入课程失败，请稍后重试')
+  }
+}
+
+// 查看课程详情
+const viewCourseDetail = (courseId) => {
+  router.push(`/student/course-study/${courseId}`)
+}
+
+// 获取难度文本
+const getDifficultyText = (difficulty) => {
+  const map = { 1: '入门', 2: '初级', 3: '中级', 4: '高级' }
+  return map[difficulty] || '未知'
+}
+
+// 获取封面渐变
+const getCoverGradient = (index) => {
+  const gradients = [
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+    'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+    'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)'
+  ]
+  return gradients[index % gradients.length]
+}
+
+onMounted(() => {
+  fetchCourses()
+})
+</script>
+
 <template>
   <!-- 搜索筛选区 -->
   <section class="search-section">
@@ -6,7 +118,7 @@
       <div class="filter-bar">
         <div class="filter-group">
           <label>学科分类</label>
-          <select>
+          <select v-model="filters.category" @change="filterCourses">
             <option value="">全部学科</option>
             <option value="cs">计算机科学</option>
             <option value="math">数学</option>
@@ -18,7 +130,7 @@
         </div>
         <div class="filter-group">
           <label>课程类型</label>
-          <select>
+          <select v-model="filters.type" @change="filterCourses">
             <option value="">全部类型</option>
             <option value="required">必修课</option>
             <option value="elective">选修课</option>
@@ -27,23 +139,23 @@
         </div>
         <div class="filter-group">
           <label>难度等级</label>
-          <select>
+          <select v-model="filters.difficulty" @change="filterCourses">
             <option value="">全部难度</option>
-            <option value="beginner">入门级</option>
-            <option value="intermediate">进阶级</option>
-            <option value="advanced">高级</option>
+            <option value="1">入门级</option>
+            <option value="2">进阶级</option>
+            <option value="3">高级</option>
           </select>
         </div>
         <div class="filter-group">
           <label>开课状态</label>
-          <select>
+          <select v-model="filters.status" @change="filterCourses">
             <option value="">全部状态</option>
             <option value="ongoing">进行中</option>
             <option value="upcoming">即将开课</option>
             <option value="finished">已结束</option>
           </select>
         </div>
-        <button class="btn-search">筛选课程</button>
+        <button class="btn-search" @click="filterCourses">筛选课程</button>
       </div>
     </div>
   </section>
@@ -53,138 +165,57 @@
     <div class="section-header">
       <h3 class="section-title">📖 热门课程</h3>
       <div class="view-options">
-        <button class="active">综合排序</button>
-        <button>最新发布</button>
-        <button>最多人学</button>
-        <button>评分最高</button>
+        <button :class="{ active: sortBy === 'comprehensive' }" @click="sortCourses('comprehensive')">综合排序</button>
+        <button :class="{ active: sortBy === 'newest' }" @click="sortCourses('newest')">最新发布</button>
+        <button :class="{ active: sortBy === 'popular' }" @click="sortCourses('popular')">最多人学</button>
+        <button :class="{ active: sortBy === 'rating' }" @click="sortCourses('rating')">评分最高</button>
       </div>
     </div>
-    <div class="course-grid">
-      <div class="course-card">
-        <div class="course-cover">💻</div>
-        <div class="course-info">
-          <h4 class="course-title">Python程序设计基础</h4>
-          <p class="course-teacher">👤 王教授 · 计算机学院</p>
-          <div class="course-meta">
-            <span>👥 1,234人在学</span>
-            <span class="course-tag">计算机</span>
-          </div>
-        </div>
-      </div>
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+    
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>正在加载课程...</p>
+    </div>
+    
+    <!-- 课程网格 -->
+    <div v-else class="course-grid">
+      <div 
+        v-for="(course, index) in courses" 
+        :key="course.course_id" 
+        class="course-card"
+      >
+        <div 
+          class="course-cover" 
+          :style="{ background: getCoverGradient(index) }"
+          @click="viewCourseDetail(course.course_id)"
         >
-          📊
+          <span class="course-emoji">{{ ['💻', '📊', '🧮', '🌐', '🤖', '📱', '🎨', '📈'][index % 8] }}</span>
+          <div class="course-difficulty">{{ getDifficultyText(course.difficulty) }}</div>
         </div>
         <div class="course-info">
-          <h4 class="course-title">数据结构与算法</h4>
-          <p class="course-teacher">👤 李老师 · 软件学院</p>
+          <h4 class="course-title" @click="viewCourseDetail(course.course_id)">{{ course.course_name }}</h4>
+          <p class="course-teacher">👤 {{ course.teacher_name }} · {{ course.department }}</p>
           <div class="course-meta">
-            <span>👥 892人在学</span>
-            <span class="course-tag">计算机</span>
+            <span>👥 {{ course.student_count }}人在学</span>
+            <span class="course-tag">{{ course.category }}</span>
           </div>
-        </div>
-      </div>
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
-        >
-          🧮
-        </div>
-        <div class="course-info">
-          <h4 class="course-title">高等数学（上）</h4>
-          <p class="course-teacher">👤 张教授 · 数学学院</p>
-          <div class="course-meta">
-            <span>👥 2,156人在学</span>
-            <span class="course-tag">数学</span>
-          </div>
-        </div>
-      </div>
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
-        >
-          🌐
-        </div>
-        <div class="course-info">
-          <h4 class="course-title">Web前端开发技术</h4>
-          <p class="course-teacher">👤 陈老师 · 信息学院</p>
-          <div class="course-meta">
-            <span>👥 756人在学</span>
-            <span class="course-tag">计算机</span>
-          </div>
-        </div>
-      </div>
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
-        >
-          🤖
-        </div>
-        <div class="course-info">
-          <h4 class="course-title">人工智能导论</h4>
-          <p class="course-teacher">👤 刘教授 · 人工智能学院</p>
-          <div class="course-meta">
-            <span>👥 1,567人在学</span>
-            <span class="course-tag">AI</span>
-          </div>
-        </div>
-      </div>
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
-        >
-          📱
-        </div>
-        <div class="course-info">
-          <h4 class="course-title">移动应用开发</h4>
-          <p class="course-teacher">👤 赵老师 · 软件学院</p>
-          <div class="course-meta">
-            <span>👥 543人在学</span>
-            <span class="course-tag">计算机</span>
-          </div>
-        </div>
-      </div>
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)"
-        >
-          🎨
-        </div>
-        <div class="course-info">
-          <h4 class="course-title">UI/UX设计基础</h4>
-          <p class="course-teacher">👤 孙老师 · 艺术学院</p>
-          <div class="course-meta">
-            <span>👥 432人在学</span>
-            <span class="course-tag">设计</span>
-          </div>
-        </div>
-      </div>
-      <div class="course-card">
-        <div
-          class="course-cover"
-          style="background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)"
-        >
-          📈
-        </div>
-        <div class="course-info">
-          <h4 class="course-title">数据库原理与应用</h4>
-          <p class="course-teacher">👤 周教授 · 计算机学院</p>
-          <div class="course-meta">
-            <span>👥 987人在学</span>
-            <span class="course-tag">计算机</span>
+          <div class="course-actions">
+            <button class="btn-join" @click="handleJoinCourse(course)">加入学习</button>
+            <button class="btn-detail" @click="viewCourseDetail(course.course_id)">查看详情</button>
           </div>
         </div>
       </div>
     </div>
-    <div class="pagination">
+    
+    <!-- 空状态 -->
+    <div v-if="!loading && courses.length === 0" class="empty-state">
+      <div class="empty-icon">📚</div>
+      <p>暂无课程</p>
+    </div>
+    
+    <!-- 分页 -->
+    <div v-if="!loading && courses.length > 0" class="pagination">
       <button>上一页</button>
       <button class="active">1</button>
       <button>2</button>
@@ -195,6 +226,7 @@
     </div>
   </section>
 </template>
+
 <style scoped>
 /* 搜索筛选区 */
 .search-section {
@@ -251,6 +283,7 @@
   cursor: pointer;
   margin-left: auto;
 }
+
 /* 课程列表 */
 .content-section {
   max-width: 1400px;
@@ -286,6 +319,27 @@
   color: white;
   border-color: #667eea;
 }
+
+/* 加载状态 */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 课程网格 */
 .course-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -296,10 +350,7 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition:
-    transform 0.3s,
-    box-shadow 0.3s;
-  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 .course-card:hover {
   transform: translateY(-4px);
@@ -307,12 +358,26 @@
 }
 .course-cover {
   height: 180px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 48px;
+  position: relative;
+  cursor: pointer;
+}
+.course-emoji {
+  font-size: 64px;
+}
+.course-difficulty {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  font-size: 12px;
+  backdrop-filter: blur(4px);
 }
 .course-info {
   padding: 20px;
@@ -323,6 +388,10 @@
   color: #333;
   margin-bottom: 8px;
   line-height: 1.4;
+  cursor: pointer;
+}
+.course-title:hover {
+  color: #667eea;
 }
 .course-teacher {
   color: #666;
@@ -335,6 +404,7 @@
   align-items: center;
   font-size: 13px;
   color: #999;
+  margin-bottom: 16px;
 }
 .course-tag {
   padding: 4px 10px;
@@ -343,6 +413,48 @@
   border-radius: 4px;
   font-size: 12px;
 }
+.course-actions {
+  display: flex;
+  gap: 12px;
+}
+.btn-join {
+  flex: 1;
+  padding: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.btn-join:hover {
+  transform: translateY(-2px);
+}
+.btn-detail {
+  padding: 10px 16px;
+  background: #f5f7fa;
+  color: #666;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-detail:hover {
+  background: #e0e0e0;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #999;
+}
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
 /* 分页 */
 .pagination {
   display: flex;

@@ -19,6 +19,13 @@ export const useUserStore = defineStore(
     const setUsername = (u) => {
       username.value = u
     }
+    // 退出登录
+    const logout = () => {
+      token.value = ''
+      role.value = ''
+      user_id.value = ''
+      username.value = ''
+    }
     return {
       token,
       setToken,
@@ -28,6 +35,7 @@ export const useUserStore = defineStore(
       setUserID,
       username,
       setUsername,
+      logout,
     }
   },
   {

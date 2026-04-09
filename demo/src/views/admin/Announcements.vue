@@ -1,107 +1,231 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/api/admin'
+
+// 公告列表
+const announcements = ref([])
+const loading = ref(false)
+
+// 创建/编辑公告弹窗
+const showModal = ref(false)
+const isEditing = ref(false)
+const announcementForm = ref({
+  announcement_id: null,
+  title: '',
+  content: '',
+  type: 'notice',
+  is_top: false
+})
+
+// 获取公告列表
+const fetchAnnouncements = async () => {
+  loading.value = true
+  try {
+    const res = await getAnnouncements()
+    if (res.data.status === 0) {
+      announcements.value = res.data.data || []
+    } else {
+      console.error('获取公告列表失败:', res.data.message)
+    }
+  } catch (error) {
+    console.error('获取公告列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 打开创建弹窗
+const openCreateModal = () => {
+  isEditing.value = false
+  announcementForm.value = {
+    announcement_id: null,
+    title: '',
+    content: '',
+    type: 'notice',
+    is_top: false
+  }
+  showModal.value = true
+}
+
+// 打开编辑弹窗
+const openEditModal = (announcement) => {
+  isEditing.value = true
+  announcementForm.value = { ...announcement }
+  showModal.value = true
+}
+
+// 保存公告
+const saveAnnouncement = async () => {
+  if (!announcementForm.value.title || !announcementForm.value.content) {
+    alert('请填写完整的标题和内容')
+    return
+  }
+
+  try {
+    if (isEditing.value) {
+      const res = await updateAnnouncement(announcementForm.value.announcement_id, announcementForm.value)
+      if (res.data.status === 0) {
+        alert('公告更新成功')
+        showModal.value = false
+        fetchAnnouncements()
+      } else {
+        alert(res.data.message || '更新失败')
+      }
+    } else {
+      const res = await createAnnouncement(announcementForm.value)
+      if (res.data.status === 0) {
+        alert('公告发布成功')
+        showModal.value = false
+        fetchAnnouncements()
+      } else {
+        alert(res.data.message || '发布失败')
+      }
+    }
+  } catch (error) {
+    console.error('保存失败:', error)
+    alert('保存失败，请稍后重试')
+  }
+}
+
+// 删除公告
+const handleDeleteAnnouncement = async (announcement) => {
+  if (confirm(`确定要删除公告"${announcement.title}"吗？`)) {
+    try {
+      const res = await deleteAnnouncement(announcement.announcement_id)
+      if (res.data.status === 0) {
+        alert('删除成功')
+        fetchAnnouncements()
+      } else {
+        alert(res.data.message || '删除失败')
+      }
+    } catch (error) {
+      console.error('删除失败:', error)
+      alert('删除失败，请稍后重试')
+    }
+  }
+}
+
+// 切换置顶状态
+const toggleTop = async (announcement) => {
+  try {
+    const res = await updateAnnouncement(announcement.announcement_id, {
+      ...announcement,
+      is_top: !announcement.is_top
+    })
+    if (res.data.status === 0) {
+      announcement.is_top = !announcement.is_top
+      alert(announcement.is_top ? '已置顶' : '已取消置顶')
+    }
+  } catch (error) {
+    console.error('操作失败:', error)
+    alert('操作失败，请稍后重试')
+  }
+}
+
+// 获取类型文本
+const getTypeText = (type) => {
+  const map = {
+    'system': '系统',
+    'important': '重要',
+    'notice': '通知'
+  }
+  return map[type] || '其他'
+}
+
+// 获取类型样式类
+const getTypeClass = (type) => {
+  return type
+}
+
+onMounted(() => {
+  fetchAnnouncements()
+})
+</script>
+
 <template>
   <!-- 主内容 -->
   <main class="main-container">
     <div class="page-header">
       <h1 class="page-title">📢 公告管理</h1>
-      <button class="btn-primary">➕ 发布公告</button>
+      <button class="btn-primary" @click="openCreateModal">➕ 发布公告</button>
     </div>
 
-    <div class="announcement-list">
-      <div class="announcement-card">
-        <div class="announcement-header">
-          <h3 class="announcement-title">关于系统维护的通知</h3>
-          <span class="announcement-type system">系统</span>
-        </div>
-        <p class="announcement-content">
-          为了提供更好的服务，系统将于本周六（3月30日）凌晨2:00-6:00进行例行维护。维护期间平台将无法访问，请提前安排好学习和教学工作。
-        </p>
-        <div class="announcement-footer">
-          <div class="announcement-meta">
-            <span>👤 系统管理员</span>
-            <span>📅 2024-03-25</span>
-            <span>👁️ 1,234次阅读</span>
-          </div>
-          <div class="announcement-actions">
-            <button class="btn-text">编辑</button>
-            <button class="btn-text">置顶</button>
-            <button class="btn-danger">删除</button>
-          </div>
-        </div>
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>正在加载公告...</p>
+    </div>
+
+    <div v-else class="announcement-list">
+      <div v-if="announcements.length === 0" class="empty-state">
+        <div class="empty-icon">📢</div>
+        <p>暂无公告</p>
       </div>
 
-      <div class="announcement-card">
+      <div v-for="announcement in announcements" :key="announcement.announcement_id" class="announcement-card">
         <div class="announcement-header">
-          <h3 class="announcement-title">期中考试安排通知</h3>
-          <span class="announcement-type important">重要</span>
+          <h3 class="announcement-title">
+            <span v-if="announcement.is_top" class="top-badge">置顶</span>
+            {{ announcement.title }}
+          </h3>
+          <span class="announcement-type" :class="getTypeClass(announcement.type)">
+            {{ getTypeText(announcement.type) }}
+          </span>
         </div>
-        <p class="announcement-content">
-          本学期期中考试将于4月8日至4月12日进行，请各位同学提前做好准备。具体考试安排请查看个人考试中心。考试期间请遵守考场纪律，诚信应考。
-        </p>
+        <p class="announcement-content">{{ announcement.content }}</p>
         <div class="announcement-footer">
           <div class="announcement-meta">
-            <span>👤 教务处</span>
-            <span>📅 2024-03-20</span>
-            <span>👁️ 3,456次阅读</span>
+            <span>👤 {{ announcement.author || '管理员' }}</span>
+            <span>📅 {{ announcement.created_at }}</span>
+            <span>👁️ {{ announcement.view_count || 0 }}次阅读</span>
           </div>
           <div class="announcement-actions">
-            <button class="btn-text">编辑</button>
-            <button class="btn-text">置顶</button>
-            <button class="btn-danger">删除</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="announcement-card">
-        <div class="announcement-header">
-          <h3 class="announcement-title">新增课程上线通知</h3>
-          <span class="announcement-type notice">通知</span>
-        </div>
-        <p class="announcement-content">
-          本学期新增多门优质课程已上线，包括《人工智能导论》、《区块链技术基础》、《数据可视化》等。欢迎同学们选课学习。
-        </p>
-        <div class="announcement-footer">
-          <div class="announcement-meta">
-            <span>👤 课程中心</span>
-            <span>📅 2024-03-15</span>
-            <span>👁️ 2,156次阅读</span>
-          </div>
-          <div class="announcement-actions">
-            <button class="btn-text">编辑</button>
-            <button class="btn-text">置顶</button>
-            <button class="btn-danger">删除</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="announcement-card">
-        <div class="announcement-header">
-          <h3 class="announcement-title">平台功能更新说明</h3>
-          <span class="announcement-type system">系统</span>
-        </div>
-        <p class="announcement-content">
-          平台已完成新一轮功能更新，新增在线流程图工具、优化了视频播放器、改进了作业提交体验。如有问题请及时反馈。
-        </p>
-        <div class="announcement-footer">
-          <div class="announcement-meta">
-            <span>👤 产品团队</span>
-            <span>📅 2024-03-10</span>
-            <span>👁️ 987次阅读</span>
-          </div>
-          <div class="announcement-actions">
-            <button class="btn-text">编辑</button>
-            <button class="btn-text">置顶</button>
-            <button class="btn-danger">删除</button>
+            <button class="btn-text" @click="openEditModal(announcement)">编辑</button>
+            <button class="btn-text" @click="toggleTop(announcement)">
+              {{ announcement.is_top ? '取消置顶' : '置顶' }}
+            </button>
+            <button class="btn-danger" @click="handleDeleteAnnouncement(announcement)">删除</button>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="pagination">
-      <button>上一页</button>
-      <button class="active">1</button>
-      <button>2</button>
-      <button>3</button>
-      <button>下一页</button>
+    <!-- 创建/编辑公告弹窗 -->
+    <div v-if="showModal" class="modal-overlay" @click="showModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>{{ isEditing ? '编辑公告' : '发布公告' }}</h3>
+          <button class="btn-close" @click="showModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>标题</label>
+            <input v-model="announcementForm.title" type="text" placeholder="请输入公告标题">
+          </div>
+          <div class="form-group">
+            <label>类型</label>
+            <select v-model="announcementForm.type">
+              <option value="notice">通知</option>
+              <option value="important">重要</option>
+              <option value="system">系统</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>内容</label>
+            <textarea v-model="announcementForm.content" rows="6" placeholder="请输入公告内容"></textarea>
+          </div>
+          <div class="form-group">
+            <label>
+              <input v-model="announcementForm.is_top" type="checkbox">
+              置顶公告
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showModal = false">取消</button>
+          <button class="btn-primary" @click="saveAnnouncement">保存</button>
+        </div>
+      </div>
     </div>
   </main>
 </template>

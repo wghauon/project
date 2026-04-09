@@ -1,5 +1,18 @@
 <script setup lang="ts">
 import SearchBox from './SearchBox.vue'
+import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
+
+const userStore = useUserStore()
+const router = useRouter()
+
+// 退出登录
+const handleLogout = () => {
+  if (confirm('确定要退出登录吗？')) {
+    userStore.logout()
+    router.push('/')
+  }
+}
 </script>
 
 <template>
@@ -19,9 +32,10 @@ import SearchBox from './SearchBox.vue'
       <div class="nav-right">
         <SearchBox></SearchBox>
         <div class="user-info">
-          <div class="avatar">张</div>
-          <span>张三</span>
+          <div class="avatar">{{ userStore.username ? userStore.username.charAt(0) : 'U' }}</div>
+          <span>{{ userStore.username || '用户' }}</span>
         </div>
+        <button class="btn-logout" @click="handleLogout">退出</button>
       </div>
     </div>
   </nav>
@@ -89,5 +103,20 @@ import SearchBox from './SearchBox.vue'
   justify-content: center;
   color: white;
   font-weight: bold;
+}
+.btn-logout {
+  padding: 6px 14px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-logout:hover {
+  background: #ff4d4f;
+  color: white;
+  border-color: #ff4d4f;
 }
 </style>

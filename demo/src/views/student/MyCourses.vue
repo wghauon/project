@@ -1,160 +1,138 @@
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { getMyCourses } from '@/api/student'
+
+const router = useRouter()
+const userStore = useUserStore()
+
+// 课程列表
+const courses = ref([])
+const loading = ref(false)
+
+// 当前标签
+const activeTab = ref('all')
+
+// 过滤后的课程
+const filteredCourses = computed(() => {
+  if (activeTab.value === 'all') {
+    return courses.value
+  } else if (activeTab.value === 'ongoing') {
+    return courses.value.filter(c => c.progress < 100)
+  } else if (activeTab.value === 'finished') {
+    return courses.value.filter(c => c.progress >= 100)
+  }
+  return courses.value
+})
+
+// 获取课程列表
+const fetchCourses = async () => {
+  loading.value = true
+  try {
+    const res = await getMyCourses()
+    if (res.data.status === 0) {
+      courses.value = res.data.data || []
+    } else {
+      console.error('获取课程列表失败:', res.data.message)
+    }
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 切换标签
+const switchTab = (tab) => {
+  activeTab.value = tab
+}
+
+// 继续学习
+const continueLearning = (courseId) => {
+  router.push(`/student/course-study/${courseId}`)
+}
+
+// 查看详情
+const viewDetail = (courseId) => {
+  router.push(`/student/course-study/${courseId}`)
+}
+
+// 获取状态文本
+const getStatusText = (status, progress) => {
+  if (status === 'finished' || progress >= 100) {
+    return '已结束'
+  }
+  return '进行中'
+}
+
+onMounted(() => {
+  fetchCourses()
+})
+</script>
+
 <template>
   <!-- 主内容 -->
   <main class="main-container">
     <div class="page-header">
       <h1 class="page-title">📖 我的课程</h1>
       <div class="course-tabs">
-        <button class="active">全部课程</button>
-        <button>进行中</button>
-        <button>已结束</button>
+        <button :class="{ active: activeTab === 'all' }" @click="switchTab('all')">全部课程</button>
+        <button :class="{ active: activeTab === 'ongoing' }" @click="switchTab('ongoing')">进行中</button>
+        <button :class="{ active: activeTab === 'finished' }" @click="switchTab('finished')">已结束</button>
       </div>
     </div>
 
-    <div class="course-grid">
-      <div class="course-card">
-        <div class="course-header">
-          <span class="course-status">进行中</span>
-          <h3 class="course-name">Python程序设计基础</h3>
-        </div>
-        <div class="course-body">
-          <div class="course-teacher">
-            <div class="teacher-avatar">👤</div>
-            <span>王教授 · 计算机学院</span>
-          </div>
-          <div class="progress-section">
-            <div class="progress-header">
-              <span>学习进度</span>
-              <span style="color: #667eea; font-weight: bold">65%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: 65%"></div>
-            </div>
-          </div>
-          <div class="course-actions">
-            <button class="btn-primary">继续学习</button>
-            <button class="btn-secondary">查看详情</button>
-          </div>
-        </div>
-      </div>
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>正在加载课程...</p>
+    </div>
 
-      <div class="course-card">
-        <div
-          class="course-header"
-          style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
-        >
-          <span class="course-status">进行中</span>
-          <h3 class="course-name">数据结构与算法</h3>
+    <!-- 课程列表 -->
+    <div v-else class="course-grid">
+      <div 
+        v-for="course in filteredCourses" 
+        :key="course.course_id" 
+        class="course-card"
+      >
+        <div class="course-header" :style="{ background: course.cover_gradient }">
+          <span class="course-status">{{ getStatusText(course.status, course.progress) }}</span>
+          <h3 class="course-name">{{ course.course_name }}</h3>
         </div>
         <div class="course-body">
           <div class="course-teacher">
             <div class="teacher-avatar">👤</div>
-            <span>李老师 · 软件学院</span>
+            <span>{{ course.teacher_name }} · {{ course.department }}</span>
           </div>
           <div class="progress-section">
             <div class="progress-header">
               <span>学习进度</span>
-              <span style="color: #667eea; font-weight: bold">42%</span>
+              <span style="color: #667eea; font-weight: bold">{{ course.progress }}%</span>
             </div>
             <div class="progress-bar">
-              <div class="progress-fill" style="width: 42%"></div>
+              <div class="progress-fill" :style="{ width: course.progress + '%' }"></div>
             </div>
           </div>
           <div class="course-actions">
-            <button class="btn-primary">继续学习</button>
-            <button class="btn-secondary">查看详情</button>
+            <button class="btn-primary" @click="continueLearning(course.course_id)">
+              {{ course.progress >= 100 ? '复习课程' : '继续学习' }}
+            </button>
+            <button class="btn-secondary" @click="viewDetail(course.course_id)">查看详情</button>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="course-card">
-        <div
-          class="course-header"
-          style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
-        >
-          <span class="course-status">进行中</span>
-          <h3 class="course-name">高等数学（上）</h3>
-        </div>
-        <div class="course-body">
-          <div class="course-teacher">
-            <div class="teacher-avatar">👤</div>
-            <span>张教授 · 数学学院</span>
-          </div>
-          <div class="progress-section">
-            <div class="progress-header">
-              <span>学习进度</span>
-              <span style="color: #667eea; font-weight: bold">88%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: 88%"></div>
-            </div>
-          </div>
-          <div class="course-actions">
-            <button class="btn-primary">继续学习</button>
-            <button class="btn-secondary">查看详情</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="course-card">
-        <div
-          class="course-header"
-          style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
-        >
-          <span class="course-status">已结束</span>
-          <h3 class="course-name">大学英语（一）</h3>
-        </div>
-        <div class="course-body">
-          <div class="course-teacher">
-            <div class="teacher-avatar">👤</div>
-            <span>陈老师 · 外语学院</span>
-          </div>
-          <div class="progress-section">
-            <div class="progress-header">
-              <span>学习进度</span>
-              <span style="color: #667eea; font-weight: bold">100%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: 100%"></div>
-            </div>
-          </div>
-          <div class="course-actions">
-            <button class="btn-primary">复习课程</button>
-            <button class="btn-secondary">查看成绩</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="course-card">
-        <div
-          class="course-header"
-          style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
-        >
-          <span class="course-status">进行中</span>
-          <h3 class="course-name">Web前端开发技术</h3>
-        </div>
-        <div class="course-body">
-          <div class="course-teacher">
-            <div class="teacher-avatar">👤</div>
-            <span>赵老师 · 信息学院</span>
-          </div>
-          <div class="progress-section">
-            <div class="progress-header">
-              <span>学习进度</span>
-              <span style="color: #667eea; font-weight: bold">23%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: 23%"></div>
-            </div>
-          </div>
-          <div class="course-actions">
-            <button class="btn-primary">继续学习</button>
-            <button class="btn-secondary">查看详情</button>
-          </div>
-        </div>
-      </div>
+    <!-- 空状态 -->
+    <div v-if="!loading && filteredCourses.length === 0" class="empty-state">
+      <div class="empty-icon">📚</div>
+      <p>暂无课程</p>
+      <button class="btn-explore" @click="router.push('/student/class')">去发现课程</button>
     </div>
   </main>
 </template>
+
 <style scoped>
 /* 主内容区 */
 .main-container {
@@ -191,6 +169,26 @@
   color: white;
   border-color: #667eea;
 }
+
+/* 加载状态 */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* 课程卡片 */
 .course-grid {
   display: grid;
@@ -202,9 +200,7 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition:
-    transform 0.3s,
-    box-shadow 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 .course-card:hover {
   transform: translateY(-4px);
@@ -212,7 +208,6 @@
 }
 .course-header {
   height: 140px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -294,6 +289,30 @@
   padding: 10px 16px;
   background: #f5f7fa;
   color: #667eea;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #999;
+}
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+.btn-explore {
+  margin-top: 20px;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
   border-radius: 8px;
   font-size: 14px;

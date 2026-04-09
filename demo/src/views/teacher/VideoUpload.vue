@@ -1,12 +1,29 @@
 <script setup>
 import { videUpload } from '@/utils/videoUpload'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { courseDetailSearch } from '@/api/course'
+import { getChapters } from '@/api/teacher'
+
+const route = useRoute()
 const file = ref(null)
+
 // 收集表单信息
-let video_name, description
+const video_name = ref('')
+const description = ref('')
+const chapter_id = ref('')
+const video_no = ref(1)
+const course_id = ref('')
+
+// 章节列表
+const chapters = ref([])
 
 // 存储选中的文件名
 const selectedFileName = ref('')
+
+// 上传状态
+const isUploading = ref(false)
+const uploadProgress = ref(0)
 
 // 处理文件选择
 const handleFileChange = (event) => {
@@ -15,6 +32,63 @@ const handleFileChange = (event) => {
     selectedFileName.value = selectedFile.name
   }
 }
+
+// 获取课程章节列表
+const fetchChapters = async () => {
+  const courseId = route.params.courseId || route.query.courseId
+  if (!courseId) return
+  
+  course_id.value = courseId
+  
+  try {
+    // 调用API获取真实章节数据
+    const res = await getChapters(courseId)
+    if (res.data.status === 0) {
+      chapters.value = res.data.data || []
+    }
+  } catch (error) {
+    console.error('获取章节失败:', error)
+  }
+}
+
+// 确认上传
+const handleUpload = async () => {
+  if (!video_name.value) {
+    alert('请输入视频标题')
+    return
+  }
+  if (!chapter_id.value) {
+    alert('请选择所属章节')
+    return
+  }
+  if (!file.value || !file.value.files[0]) {
+    alert('请选择视频文件')
+    return
+  }
+  
+  isUploading.value = true
+  uploadProgress.value = 0
+  
+  try {
+    await videUpload(file.value.files[0], video_name.value, description.value, course_id.value, chapter_id.value)
+    alert('视频上传成功！')
+    // 清空表单
+    video_name.value = ''
+    description.value = ''
+    chapter_id.value = ''
+    selectedFileName.value = ''
+    file.value.value = ''
+  } catch (error) {
+    console.error('上传失败:', error)
+    alert('上传失败，请稍后重试')
+  } finally {
+    isUploading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchChapters()
+})
 </script>
 <template>
   <!-- 主内容 -->
@@ -94,29 +168,27 @@ const handleFileChange = (event) => {
           <p class="form-hint">建议标题简洁明了，包含章节信息，如：4.1 面向对象编程概述</p>
         </div>
 
-        <!-- <div class="form-row">
+        <div class="form-row">
           <div class="form-group">
             <label class="form-label">所属章节 <span class="required">*</span></label>
-            <select class="form-select">
+            <select class="form-select" v-model="chapter_id">
               <option value="">请选择章节</option>
-              <option value="ch1">第1章：Python基础入门</option>
-              <option value="ch2">第2章：数据类型与运算符</option>
-              <option value="ch3">第3章：函数与模块</option>
-              <option value="ch4">第4章：面向对象编程</option>
-              <option value="ch5">第5章：文件操作与异常处理</option>
+              <option v-for="chapter in chapters" :key="chapter.chapter_id" :value="chapter.chapter_id">
+                {{ chapter.chapter_name }}
+              </option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label">课时序号 <span class="required">*</span></label>
-            <select class="form-select">
-              <option value="1" selected>第1课时</option>
+            <select class="form-select" v-model="video_no">
+              <option value="1">第1课时</option>
               <option value="2">第2课时</option>
               <option value="3">第3课时</option>
               <option value="4">第4课时</option>
               <option value="5">第5课时</option>
             </select>
           </div>
-        </div> -->
+        </div>
 
         <div class="form-group">
           <label class="form-label">视频简介</label>
@@ -197,9 +269,9 @@ const handleFileChange = (event) => {
 
       <!-- 按钮组 -->
       <div class="form-actions">
-        <button class="btn-secondary">取消</button>
+        <button class="btn-secondary" @click="$router.back()">取消</button>
         <button class="btn-secondary">保存为草稿</button>
-        <button class="btn-primary" @click="videUpload(file.files[0], video_name, description)">
+        <button class="btn-primary" @click="handleUpload">
           ✓ 确认上传
         </button>
       </div>

@@ -206,3 +206,180 @@ function mergeChunksSequentially(chunks, writeStream) {
     writeStream.on('error', reject)
   })
 }
+
+// ==================== 章节管理接口 ====================
+
+// 获取章节列表
+exports.getChapters = async (req, res) => {
+  try {
+    // 支持从路由参数或查询参数获取 course_id
+    const course_id = req.params.courseId || req.query.course_id
+    if (!course_id) {
+      return res.send({ status: 1, message: '缺少课程ID' })
+    }
+    const [rows] = await db.execute(
+      'SELECT * FROM chapters WHERE course_id = ? ORDER BY chapter_no',
+      [course_id]
+    )
+    res.send({ status: 0, message: '获取成功', data: rows })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}
+
+// 添加章节
+exports.addChapter = async (req, res) => {
+  try {
+    const { course_id, chapter_name, chapter_no } = req.body
+    const [result] = await db.execute(
+      'INSERT INTO chapters (course_id, chapter_name, chapter_no, created_at) VALUES (?, ?, ?, NOW())',
+      [course_id, chapter_name, chapter_no]
+    )
+    res.send({ status: 0, message: '添加成功', data: { chapter_id: result.insertId } })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}
+
+// 更新章节
+exports.updateChapter = async (req, res) => {
+  try {
+    const { chapterId } = req.params
+    const { chapter_name, chapter_no } = req.body
+    await db.execute(
+      'UPDATE chapters SET chapter_name = ?, chapter_no = ? WHERE chapter_id = ?',
+      [chapter_name, chapter_no, chapterId]
+    )
+    res.send({ status: 0, message: '更新成功' })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}
+
+// 删除章节
+exports.deleteChapter = async (req, res) => {
+  try {
+    const { chapterId } = req.params
+    await db.execute('DELETE FROM chapters WHERE chapter_id = ?', [chapterId])
+    res.send({ status: 0, message: '删除成功' })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}
+
+// 删除视频
+exports.deleteVideo = async (req, res) => {
+  try {
+    const { videoId } = req.params
+    await db.execute('DELETE FROM videos WHERE video_id = ?', [videoId])
+    res.send({ status: 0, message: '删除成功' })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}
+
+// ==================== 学生管理接口 ====================
+
+// 获取课程学生列表
+exports.getCourseStudents = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    const [rows] = await db.execute(`
+      SELECT 
+        u.user_id,
+        u.username,
+        u.real_name,
+        u.student_no,
+        u.email,
+        u.department,
+        cs.status,
+        cs.join_time,
+        cs.progress,
+        cs.avg_score
+      FROM users u
+      INNER JOIN course_students cs ON u.user_id = cs.student_id
+      WHERE cs.course_id = ?
+      ORDER BY cs.join_time DESC
+    `, [courseId])
+    res.send({ status: 0, message: '获取成功', data: rows })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}
+
+// 移除学生
+exports.removeStudent = async (req, res) => {
+  try {
+    const { courseId, studentId } = req.params
+    await db.execute(
+      'UPDATE course_students SET status = 0 WHERE course_id = ? AND student_id = ?',
+      [courseId, studentId]
+    )
+    res.send({ status: 0, message: '移除成功' })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}
+
+// 恢复学生
+exports.restoreStudent = async (req, res) => {
+  try {
+    const { courseId, studentId } = req.params
+    await db.execute(
+      'UPDATE course_students SET status = 1 WHERE course_id = ? AND student_id = ?',
+      [courseId, studentId]
+    )
+    res.send({ status: 0, message: '恢复成功' })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}
+
+// 获取学生学习进度
+exports.getStudentProgress = async (req, res) => {
+  try {
+    const { courseId, studentId } = req.params
+    
+    // 获取课程总视频数
+    const [totalVideos] = await db.execute(`
+      SELECT COUNT(*) as total FROM videos v
+      INNER JOIN chapters c ON v.chapter_id = c.chapter_id
+      WHERE c.course_id = ? AND v.status = 1
+    `, [courseId])
+    
+    // 获取学生已完成的视频数
+    const [completedVideos] = await db.execute(`
+      SELECT COUNT(*) as completed FROM video_progress vp
+      INNER JOIN videos v ON vp.video_id = v.video_id
+      INNER JOIN chapters c ON v.chapter_id = c.chapter_id
+      WHERE c.course_id = ? AND vp.student_id = ? AND vp.is_completed = 1
+    `, [courseId, studentId])
+    
+    // 获取学生考试成绩
+    const [examScores] = await db.execute(`
+      SELECT AVG(score) as avg_score, COUNT(*) as exam_count
+      FROM exam_records
+      WHERE student_id = ? AND exam_id IN (
+        SELECT exam_id FROM exams WHERE course_id = ?
+      )
+    `, [studentId, courseId])
+    
+    const total = totalVideos[0].total
+    const completed = completedVideos[0].completed
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0
+    
+    res.send({
+      status: 0,
+      message: '获取成功',
+      data: {
+        total_videos: total,
+        completed_videos: completed,
+        progress: progress,
+        avg_score: examScores[0].avg_score || 0,
+        exam_count: examScores[0].exam_count || 0
+      }
+    })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}

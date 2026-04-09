@@ -47,14 +47,23 @@ exports.login = async (req,res) => {
     if (rows.length !== 1) { return res.send({ message: '用户不存在'}) }
     // 用户ID
     const user_id = rows[0].user_id
+    const user_role = rows[0].role
+    const real_name = rows[0].real_name
     // 确认密码是否匹配
     if (rows[0].password !== password) { return res.send({ message: '密码错误'}) }
     // 确认身份是否匹配
-    if (rows[0].role !== role) { return res.send({ message:'身份不匹配'})}
+    if (user_role !== role) { return res.send({ message:'身份不匹配'})}
     // 登录成功,返回登录token字符串
-    const user = { username, password, role}
+    const user = { username, user_id, role: user_role }
     const tokenStr = jwt.sign(user, config.jwtSecretKey, {expiresIn: config.expiresIn})
-    res.send({ message: '登录成功', token: 'Bearer ' + tokenStr, user_id})
+    res.send({ 
+      message: '登录成功', 
+      token: 'Bearer ' + tokenStr, 
+      user_id,
+      role: user_role,
+      real_name,
+      username
+    })
   }
   catch (err) {
     res.send({ message: err.message})

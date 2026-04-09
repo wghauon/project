@@ -1,157 +1,183 @@
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { getExamList } from '@/api/student'
+
+const router = useRouter()
+
+// 当前标签
+const activeTab = ref('all')
+
+// 考试列表
+const exams = ref([])
+const loading = ref(false)
+
+// 过滤后的考试列表
+const filteredExams = computed(() => {
+  if (activeTab.value === 'all') {
+    return exams.value
+  }
+  return exams.value.filter(exam => exam.status === activeTab.value)
+})
+
+// 获取考试列表
+const fetchExams = async () => {
+  loading.value = true
+  try {
+    const res = await getExamList()
+    if (res.data.status === 0) {
+      exams.value = res.data.data || []
+    } else {
+      console.error('获取考试列表失败:', res.data.message)
+    }
+  } catch (error) {
+    console.error('获取考试列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 切换标签
+const switchTab = (tab) => {
+  activeTab.value = tab
+}
+
+// 开始/继续考试
+const startExam = (exam) => {
+  if (exam.status === 'ongoing') {
+    router.push(`/student/exam-taking/${exam.exam_id}`)
+  } else if (exam.status === 'upcoming') {
+    alert('考试尚未开始')
+  }
+}
+
+// 查看解析
+const viewAnalysis = (exam) => {
+  router.push(`/student/exam-result/${exam.exam_id}`)
+}
+
+// 申请补考
+const applyRetake = (exam) => {
+  alert(`已申请补考：${exam.exam_name}`)
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+  const map = {
+    'upcoming': '待开始',
+    'ongoing': '进行中',
+    'completed': '已完成',
+    'missed': '缺考'
+  }
+  return map[status] || '未知'
+}
+
+// 获取状态样式类
+const getStatusClass = (status) => {
+  return status
+}
+
+// 获取图标
+const getIcon = (index) => {
+  const icons = ['📝', '📋', '📊', '💻', '📚']
+  return icons[index % icons.length]
+}
+
+// 获取渐变
+const getGradient = (index) => {
+  const gradients = [
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+  ]
+  return gradients[index % gradients.length]
+}
+
+onMounted(() => {
+  fetchExams()
+})
+</script>
+
 <template>
   <!-- 主内容 -->
   <main class="main-container">
     <div class="page-header">
       <h1 class="page-title">📝 考试中心</h1>
       <div class="filter-tabs">
-        <button class="active">全部</button>
-        <button>待考试</button>
-        <button>进行中</button>
-        <button>已结束</button>
+        <button :class="{ active: activeTab === 'all' }" @click="switchTab('all')">全部</button>
+        <button :class="{ active: activeTab === 'upcoming' }" @click="switchTab('upcoming')">待考试</button>
+        <button :class="{ active: activeTab === 'ongoing' }" @click="switchTab('ongoing')">进行中</button>
+        <button :class="{ active: activeTab === 'completed' }" @click="switchTab('completed')">已结束</button>
       </div>
     </div>
 
     <div class="exam-list">
-      <div class="exam-card">
+      <div v-for="(exam, index) in filteredExams" :key="exam.exam_id" class="exam-card">
         <div class="exam-main">
-          <div class="exam-icon">📝</div>
+          <div class="exam-icon" :style="{ background: getGradient(index) }">
+            {{ getIcon(index) }}
+          </div>
           <div class="exam-info">
             <div class="exam-header">
-              <h3 class="exam-title">Python程序设计期中考试</h3>
-              <span class="status-badge ongoing">进行中</span>
+              <h3 class="exam-title">{{ exam.exam_name }}</h3>
+              <span class="status-badge" :class="getStatusClass(exam.status)">
+                {{ getStatusText(exam.status) }}
+              </span>
             </div>
-            <div class="exam-course">📖 Python程序设计基础</div>
+            <div class="exam-course">📖 {{ exam.course_name }}</div>
             <div class="exam-meta">
-              <span>⏱️ 考试时长：120分钟</span>
-              <span>📊 总分：100分</span>
-              <span>📝 题目：50道</span>
-              <span>⏰ 剩余时间：85分钟</span>
+              <span v-if="exam.duration">⏱️ 考试时长：{{ exam.duration }}分钟</span>
+              <span v-if="exam.total_score">📊 总分：{{ exam.total_score }}分</span>
+              <span v-if="exam.question_count">📝 题目：{{ exam.question_count }}道</span>
+              <span v-if="exam.remaining_time">⏰ 剩余时间：{{ exam.remaining_time }}分钟</span>
+              <span v-if="exam.used_time">⏱️ 用时：{{ exam.used_time }}分钟</span>
+              <span v-if="exam.start_time && exam.status !== 'completed'">📅 开始时间：{{ exam.start_time }}</span>
+              <span v-if="exam.submit_time">📅 提交时间：{{ exam.submit_time }}</span>
+              <span v-if="exam.rank">📊 班级排名：{{ exam.rank }}/{{ exam.total_students }}</span>
             </div>
           </div>
         </div>
         <div class="exam-actions">
-          <button class="btn-primary">继续考试</button>
-        </div>
-      </div>
-
-      <div class="exam-card">
-        <div class="exam-main">
-          <div
-            class="exam-icon"
-            style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
-          >
-            📋
-          </div>
-          <div class="exam-info">
-            <div class="exam-header">
-              <h3 class="exam-title">数据结构单元测试</h3>
-              <span class="status-badge upcoming">待开始</span>
+          <!-- 进行中的考试 -->
+          <template v-if="exam.status === 'ongoing'">
+            <button class="btn-primary" @click="startExam(exam)">继续考试</button>
+          </template>
+          
+          <!-- 待开始的考试 -->
+          <template v-else-if="exam.status === 'upcoming'">
+            <div class="countdown">
+              <div class="countdown-label">距离开始</div>
+              <div class="countdown-value">{{ exam.countdown }}</div>
             </div>
-            <div class="exam-course">📖 数据结构与算法</div>
-            <div class="exam-meta">
-              <span>⏱️ 考试时长：90分钟</span>
-              <span>📊 总分：100分</span>
-              <span>📝 题目：40道</span>
-              <span>📅 开始时间：3月25日 14:00</span>
+          </template>
+          
+          <!-- 已完成的考试 -->
+          <template v-else-if="exam.status === 'completed'">
+            <div class="score-display">
+              <div class="score-label">考试成绩</div>
+              <div class="score-value">{{ exam.score }}<span class="score-total">/100</span></div>
             </div>
-          </div>
-        </div>
-        <div class="exam-actions">
-          <div class="countdown">
-            <div class="countdown-label">距离开始</div>
-            <div class="countdown-value">2天 4小时</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="exam-card">
-        <div class="exam-main">
-          <div
-            class="exam-icon"
-            style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
-          >
-            📊
-          </div>
-          <div class="exam-info">
-            <div class="exam-header">
-              <h3 class="exam-title">高等数学第一章测试</h3>
-              <span class="status-badge completed">已完成</span>
-            </div>
-            <div class="exam-course">📖 高等数学（上）</div>
-            <div class="exam-meta">
-              <span>⏱️ 用时：78分钟</span>
-              <span>📅 提交时间：3月18日</span>
-              <span>📊 班级排名：12/56</span>
-            </div>
-          </div>
-        </div>
-        <div class="exam-actions">
-          <div class="score-display">
-            <div class="score-label">考试成绩</div>
-            <div class="score-value">88<span class="score-total">/100</span></div>
-          </div>
-          <button class="btn-secondary">查看解析</button>
-        </div>
-      </div>
-
-      <div class="exam-card">
-        <div class="exam-main">
-          <div
-            class="exam-icon"
-            style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
-          >
-            💻
-          </div>
-          <div class="exam-info">
-            <div class="exam-header">
-              <h3 class="exam-title">Web前端基础测验</h3>
-              <span class="status-badge missed">缺考</span>
-            </div>
-            <div class="exam-course">📖 Web前端开发技术</div>
-            <div class="exam-meta">
-              <span>⏱️ 考试时长：60分钟</span>
-              <span>📅 考试时间：3月15日 10:00</span>
-              <span>⚠️ 缺考原因：未按时参加</span>
-            </div>
-          </div>
-        </div>
-        <div class="exam-actions">
-          <button class="btn-secondary">申请补考</button>
-        </div>
-      </div>
-
-      <div class="exam-card">
-        <div class="exam-main">
-          <div
-            class="exam-icon"
-            style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
-          >
-            📚
-          </div>
-          <div class="exam-info">
-            <div class="exam-header">
-              <h3 class="exam-title">大学英语词汇测试</h3>
-              <span class="status-badge completed">已完成</span>
-            </div>
-            <div class="exam-course">📖 大学英语（一）</div>
-            <div class="exam-meta">
-              <span>⏱️ 用时：45分钟</span>
-              <span>📅 提交时间：3月10日</span>
-              <span>📊 班级排名：5/48</span>
-            </div>
-          </div>
-        </div>
-        <div class="exam-actions">
-          <div class="score-display">
-            <div class="score-label">考试成绩</div>
-            <div class="score-value">95<span class="score-total">/100</span></div>
-          </div>
-          <button class="btn-secondary">查看解析</button>
+            <button class="btn-secondary" @click="viewAnalysis(exam)">查看解析</button>
+          </template>
+          
+          <!-- 缺考的考试 -->
+          <template v-else-if="exam.status === 'missed'">
+            <button class="btn-secondary" @click="applyRetake(exam)">申请补考</button>
+          </template>
         </div>
       </div>
     </div>
+
+    <!-- 空状态 -->
+    <div v-if="filteredExams.length === 0" class="empty-state">
+      <div class="empty-icon">📝</div>
+      <p>暂无考试</p>
+    </div>
   </main>
 </template>
+
 <style scoped>
 /* 主内容 */
 .main-container {
@@ -188,6 +214,7 @@
   color: white;
   border-color: #667eea;
 }
+
 /* 考试列表 */
 .exam-list {
   display: flex;
@@ -211,7 +238,6 @@
 .exam-icon {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -262,7 +288,8 @@
 }
 .exam-meta {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
   font-size: 13px;
   color: #666;
 }
@@ -287,6 +314,10 @@
   font-weight: 500;
   cursor: pointer;
   min-width: 120px;
+  transition: transform 0.2s;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
 }
 .btn-secondary {
   padding: 12px 32px;
@@ -298,15 +329,8 @@
   cursor: pointer;
   min-width: 120px;
 }
-.btn-disabled {
-  padding: 12px 32px;
+.btn-secondary:hover {
   background: #e0e0e0;
-  color: #999;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: not-allowed;
-  min-width: 120px;
 }
 .score-display {
   text-align: center;
@@ -343,5 +367,29 @@
   font-size: 18px;
   font-weight: bold;
   color: #ff9800;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #999;
+}
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .exam-card {
+    grid-template-columns: 1fr;
+  }
+  .exam-actions {
+    align-items: stretch;
+  }
+  .exam-meta {
+    gap: 8px;
+  }
 }
 </style>

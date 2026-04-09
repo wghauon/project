@@ -1,122 +1,180 @@
-<template>
-  <!-- 主内容 -->
-  <main class="main-container">
-    <h1 class="page-title">📊 系统概览</h1>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { getDashboardStats, getRecentActivities } from '@/api/admin'
 
-    <!-- 统计数据 -->
+// 统计数据
+const stats = ref({
+  totalUsers: 0,
+  totalCourses: 0,
+  totalVideos: 0,
+  totalExams: 0,
+  todayActive: 0,
+  newUsersToday: 0,
+  newCoursesToday: 0,
+  pendingReviews: 0
+})
+
+// 最近活动
+const recentActivities = ref([])
+
+// 课程分类统计
+const categoryStats = ref([])
+
+// 获取统计数据
+const fetchStats = async () => {
+  try {
+    const res = await getDashboardStats()
+    if (res.data.status === 0) {
+      const data = res.data.data
+      stats.value = {
+        totalUsers: data.users?.total_users || 0,
+        totalCourses: data.courses?.total_courses || 0,
+        totalVideos: data.videos?.total_videos || 0,
+        totalExams: data.exams?.total_exams || 0,
+        todayActive: 0,
+        newUsersToday: data.users?.new_users_today || 0,
+        newCoursesToday: data.courses?.new_courses_today || 0,
+        pendingReviews: data.courses?.pending_courses || 0
+      }
+    }
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+  }
+}
+
+// 获取最近活动
+const fetchActivities = async () => {
+  try {
+    const res = await getRecentActivities()
+    if (res.data.status === 0) {
+      recentActivities.value = res.data.data || []
+    }
+  } catch (error) {
+    console.error('获取最近活动失败:', error)
+  }
+}
+
+onMounted(() => {
+  fetchStats()
+  fetchActivities()
+})
+</script>
+
+<template>
+  <div class="dashboard-page">
+    <h1 class="page-title">📊 仪表盘</h1>
+
+    <!-- 统计卡片 -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon blue">👨‍🎓</div>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">👥</div>
         <div class="stat-info">
-          <h3>2,856</h3>
-          <p>学生总数</p>
+          <h3>{{ stats.totalUsers }}</h3>
+          <p>总用户数</p>
+          <span class="stat-change">+{{ stats.newUsersToday }} 今日新增</span>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon green">👨‍🏫</div>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">📚</div>
         <div class="stat-info">
-          <h3>186</h3>
-          <p>教师总数</p>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon orange">📚</div>
-        <div class="stat-info">
-          <h3>324</h3>
+          <h3>{{ stats.totalCourses }}</h3>
           <p>课程总数</p>
+          <span class="stat-change">+{{ stats.newCoursesToday }} 今日新增</span>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon purple">📝</div>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">📹</div>
         <div class="stat-info">
-          <h3>1,245</h3>
+          <h3>{{ stats.totalVideos }}</h3>
+          <p>视频总数</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)">📝</div>
+        <div class="stat-info">
+          <h3>{{ stats.totalExams }}</h3>
           <p>考试总数</p>
         </div>
       </div>
     </div>
 
-    <!-- 图表区域 -->
-    <div class="charts-section">
-      <div class="chart-card">
-        <h2 class="chart-title">📈 用户增长趋势</h2>
-        <div class="chart-placeholder">用户增长趋势图表</div>
+    <!-- 今日概览 -->
+    <div class="overview-section">
+      <div class="overview-card">
+        <h3>今日活跃</h3>
+        <div class="overview-number">{{ stats.todayActive }}</div>
+        <p>人在线学习</p>
       </div>
-      <div class="chart-card">
-        <h2 class="chart-title">📊 课程分类占比</h2>
-        <div class="chart-placeholder">课程分类饼图</div>
+      <div class="overview-card warning">
+        <h3>待审核</h3>
+        <div class="overview-number">{{ stats.pendingReviews }}</div>
+        <p>个课程待审核</p>
       </div>
     </div>
 
-    <!-- 待办事项 -->
-    <div class="todo-section">
-      <div class="todo-card">
-        <div class="todo-header">
-          <h2 class="todo-title">⏳ 待审核课程</h2>
-          <span class="todo-badge">5 待处理</span>
-        </div>
-        <div class="todo-list">
-          <div class="todo-item">
-            <span class="todo-text">机器学习基础 - 李教授</span>
-            <button class="todo-action">去审核</button>
-          </div>
-          <div class="todo-item">
-            <span class="todo-text">深度学习入门 - 张老师</span>
-            <button class="todo-action">去审核</button>
-          </div>
-          <div class="todo-item">
-            <span class="todo-text">云计算技术 - 王教授</span>
-            <button class="todo-action">去审核</button>
+    <!-- 主要内容区 -->
+    <div class="main-content">
+      <!-- 最近活动 -->
+      <div class="activity-section">
+        <h3>📋 最近活动</h3>
+        <div class="activity-list">
+          <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
+            <span class="activity-dot" :class="activity.type"></span>
+            <span class="activity-content">{{ activity.content }}</span>
+            <span class="activity-time">{{ activity.time }}</span>
           </div>
         </div>
       </div>
-      <div class="todo-card">
-        <div class="todo-header">
-          <h2 class="todo-title">🚨 系统告警</h2>
-          <span class="todo-badge">2 待处理</span>
-        </div>
-        <div class="todo-list">
-          <div class="todo-item">
-            <span class="todo-text">存储空间使用率超过 85%</span>
-            <button class="todo-action">查看</button>
-          </div>
-          <div class="todo-item">
-            <span class="todo-text">3个用户账号异常登录</span>
-            <button class="todo-action">查看</button>
+
+      <!-- 课程分类统计 -->
+      <div class="category-section">
+        <h3>📊 课程分类统计</h3>
+        <div class="category-list">
+          <div v-for="category in categoryStats" :key="category.name" class="category-item">
+            <span class="category-name">{{ category.name }}</span>
+            <div class="category-bar">
+              <div class="category-fill" :style="{ width: (category.count / 20 * 100) + '%' }"></div>
+            </div>
+            <span class="category-count">{{ category.count }}门</span>
           </div>
         </div>
       </div>
     </div>
-  </main>
+  </div>
 </template>
+
 <style scoped>
-/* 主内容 */
-.main-container {
-  max-width: 1400px;
+.dashboard-page {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px 20px;
 }
+
 .page-title {
   font-size: 24px;
   font-weight: bold;
   color: #333;
   margin-bottom: 24px;
 }
+
 /* 统计卡片 */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
+
 .stat-card {
   background: white;
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   gap: 16px;
 }
+
 .stat-icon {
   width: 56px;
   height: 56px;
@@ -126,110 +184,192 @@
   justify-content: center;
   font-size: 28px;
 }
-.stat-icon.blue {
-  background: #e3f2fd;
-}
-.stat-icon.green {
-  background: #e8f5e9;
-}
-.stat-icon.orange {
-  background: #fff3e0;
-}
-.stat-icon.purple {
-  background: #f3e5f5;
-}
+
 .stat-info h3 {
   font-size: 28px;
   font-weight: bold;
   color: #333;
 }
+
 .stat-info p {
-  font-size: 14px;
   color: #666;
-  margin-top: 4px;
+  font-size: 14px;
+  margin-bottom: 4px;
 }
-/* 图表区域 */
-.charts-section {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-  margin-bottom: 32px;
+
+.stat-change {
+  font-size: 12px;
+  color: #4caf50;
 }
-.chart-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-.chart-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
-}
-.chart-placeholder {
-  height: 280px;
-  background: #f5f7fa;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-}
-/* 待办事项 */
-.todo-section {
+
+/* 今日概览 */
+.overview-section {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  gap: 20px;
+  margin-bottom: 24px;
 }
-.todo-card {
+
+.overview-card {
   background: white;
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: center;
 }
-.todo-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+
+.overview-card.warning {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white;
 }
-.todo-title {
+
+.overview-card.warning h3,
+.overview-card.warning p {
+  color: white;
+}
+
+.overview-card h3 {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.overview-number {
+  font-size: 48px;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 8px;
+}
+
+.overview-card.warning .overview-number {
+  color: white;
+}
+
+.overview-card p {
+  color: #999;
+  font-size: 14px;
+}
+
+/* 主要内容区 */
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.activity-section,
+.category-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.activity-section h3,
+.category-section h3 {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: bold;
   color: #333;
+  margin-bottom: 16px;
 }
-.todo-badge {
-  padding: 4px 10px;
-  background: #ffebee;
-  color: #f44336;
-  border-radius: 10px;
-  font-size: 12px;
-}
-.todo-list {
+
+/* 活动列表 */
+.activity-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.todo-item {
+
+.activity-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 12px;
-  background: #f5f7fa;
+  background: #f9faff;
   border-radius: 8px;
 }
-.todo-text {
-  color: #333;
-  font-size: 14px;
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
-.todo-action {
-  padding: 6px 12px;
-  background: white;
-  color: #667eea;
-  border: none;
-  border-radius: 6px;
+
+.activity-dot.user { background: #667eea; }
+.activity-dot.course { background: #4caf50; }
+.activity-dot.exam { background: #ff9800; }
+.activity-dot.system { background: #9c27b0; }
+.activity-dot.experiment { background: #00bcd4; }
+
+.activity-content {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.activity-time {
   font-size: 12px;
-  cursor: pointer;
+  color: #999;
+}
+
+/* 分类统计 */
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.category-name {
+  width: 100px;
+  font-size: 14px;
+  color: #666;
+}
+
+.category-bar {
+  flex: 1;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.category-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.category-count {
+  width: 50px;
+  text-align: right;
+  font-size: 13px;
+  color: #666;
+}
+
+/* 响应式 */
+@media (max-width: 968px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .overview-section {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

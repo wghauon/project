@@ -1,5 +1,187 @@
 <script setup>
+import { ref, onMounted, computed } from 'vue'
 import SearchBox from '@/components/SearchBox.vue'
+import { getCourseStudents, removeStudent, restoreStudent as restoreStudentAPI, getStudentProgress, getTeacherCourses } from '@/api/teacher'
+
+// 学生列表
+const students = ref([])
+const loading = ref(false)
+const total = ref(0)
+
+// 课程列表
+const courses = ref([])
+
+// 筛选条件
+const courseFilter = ref('')
+const statusFilter = ref('')
+const searchKeyword = ref('')
+
+// 当前页
+const currentPage = ref(1)
+const pageSize = 10
+
+// 获取课程列表
+const fetchCourses = async () => {
+  try {
+    const res = await getTeacherCourses()
+    if (res.data.status === 0) {
+      courses.value = res.data.data || []
+      // 默认选择第一个课程
+      if (courses.value.length > 0 && !courseFilter.value) {
+        courseFilter.value = courses.value[0].course_id
+        fetchStudents()
+      }
+    }
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
+  }
+}
+
+// 获取学生列表
+const fetchStudents = async () => {
+  if (!courseFilter.value) {
+    students.value = []
+    total.value = 0
+    return
+  }
+  
+  loading.value = true
+  try {
+    const res = await getCourseStudents(courseFilter.value)
+    if (res.data.status === 0) {
+      let data = res.data.data || []
+      
+      // 状态筛选
+      if (statusFilter.value) {
+        const status = statusFilter.value === 'active' ? 1 : 0
+        data = data.filter(s => s.status === status)
+      }
+      
+      // 关键词搜索
+      if (searchKeyword.value) {
+        const keyword = searchKeyword.value.toLowerCase()
+        data = data.filter(s => 
+          s.real_name?.toLowerCase().includes(keyword) ||
+          s.username?.toLowerCase().includes(keyword) ||
+          s.student_no?.toLowerCase().includes(keyword)
+        )
+      }
+      
+      students.value = data
+      total.value = data.length
+    }
+  } catch (error) {
+    console.error('获取学生列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 搜索学生
+const searchStudents = () => {
+  currentPage.value = 1
+  fetchStudents()
+}
+
+// 导出学生名单
+const exportStudents = () => {
+  if (students.value.length === 0) {
+    alert('暂无学生数据可导出')
+    return
+  }
+  // 简单的CSV导出
+  let csv = '姓名,学号,院系,学习进度,平均成绩,状态,加入时间\n'
+  students.value.forEach(s => {
+    csv += `${s.real_name || s.username},${s.student_no || '-'},${s.department || '-'},${s.progress || 0}%,${s.avg_score?.toFixed(1) || '-'},${getStatusText(s.status)},${s.join_time?.split(' ')[0] || '-'}\n`
+  })
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `学生名单_${new Date().toLocaleDateString()}.csv`
+  link.click()
+}
+
+// 切换页码
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+// 移除学生
+const removeStudentFromCourse = async (student) => {
+  if (confirm(`确定要将"${student.real_name}"从课程中移除吗？`)) {
+    try {
+      const res = await removeStudent(courseFilter.value, student.user_id)
+      if (res.data.status === 0) {
+        alert('移除成功')
+        fetchStudents()
+      } else {
+        alert(res.data.message || '移除失败')
+      }
+    } catch (error) {
+      console.error('移除失败:', error)
+      alert('移除失败，请稍后重试')
+    }
+  }
+}
+
+// 恢复学生
+const handleRestoreStudent = async (student) => {
+  if (confirm(`确定要恢复"${student.real_name}"的学习资格吗？`)) {
+    try {
+      const res = await restoreStudentAPI(courseFilter.value, student.user_id)
+      if (res.data.status === 0) {
+        alert('恢复成功')
+        fetchStudents()
+      } else {
+        alert(res.data.message || '恢复失败')
+      }
+    } catch (error) {
+      console.error('恢复失败:', error)
+      alert('恢复失败，请稍后重试')
+    }
+  }
+}
+
+// 查看学生详情
+const viewStudentDetail = async (student) => {
+  try {
+    const res = await getStudentProgress(courseFilter.value, student.user_id)
+    if (res.data.status === 0) {
+      const data = res.data.data
+      alert(`学生学习详情：\n学习进度：${data.progress}%\n平均成绩：${data.avg_score?.toFixed(1) || '-'}\n完成视频：${data.completed_videos}/${data.total_videos}\n考试次数：${data.exam_count}`)
+    }
+  } catch (error) {
+    console.error('获取学生进度失败:', error)
+    alert('获取学生进度失败')
+  }
+}
+
+// 过滤后的学生列表
+const filteredStudents = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return students.value.slice(start, start + pageSize)
+})
+
+// 总页数
+const totalPages = computed(() => {
+  return Math.ceil(total.value / pageSize)
+})
+
+// 获取状态文本
+const getStatusText = (status) => {
+  return status === 1 ? '学习中' : '已退出'
+}
+
+// 获取状态样式类
+const getStatusClass = (status) => {
+  return status === 1 ? 'active' : 'inactive'
+}
+
+onMounted(() => {
+  fetchCourses()
+})
 </script>
 <template>
   <!-- 主内容 -->
@@ -11,38 +193,53 @@ import SearchBox from '@/components/SearchBox.vue'
     <div class="filter-bar">
       <div class="filter-group">
         <label>课程</label>
-        <select>
-          <option value="">全部课程</option>
-          <option value="python">Python程序设计基础</option>
-          <option value="ds">数据结构与算法</option>
+        <select v-model="courseFilter" @change="fetchStudents">
+          <option value="">请选择课程</option>
+          <option v-for="course in courses" :key="course.course_id" :value="course.course_id">
+            {{ course.course_name }}
+          </option>
         </select>
       </div>
       <div class="filter-group">
         <label>状态</label>
-        <select>
+        <select v-model="statusFilter" @change="fetchStudents">
           <option value="">全部状态</option>
           <option value="active">学习中</option>
           <option value="inactive">已退出</option>
         </select>
       </div>
-      <SearchBox></SearchBox>
+      <div class="filter-group">
+        <input v-model="searchKeyword" placeholder="搜索学生姓名/学号" @keyup.enter="searchStudents" />
+      </div>
+      <button class="btn-primary" @click="searchStudents">搜索</button>
     </div>
 
     <div class="student-table-container">
       <div class="table-header">
-        <span class="table-info">共 150 名学生</span>
+        <span class="table-info">共 {{ total }} 名学生</span>
         <div class="table-actions">
-          <button class="btn-secondary">📥 导入学生</button>
-          <button class="btn-secondary">📤 导出名单</button>
-          <button class="btn-primary">➕ 添加学生</button>
+          <button class="btn-secondary" @click="exportStudents">📤 导出名单</button>
         </div>
       </div>
-      <table>
+      
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>正在加载学生列表...</p>
+      </div>
+      
+      <!-- 空状态 -->
+      <div v-else-if="students.length === 0" class="empty-state">
+        <div class="empty-icon">👨‍🎓</div>
+        <p>{{ courseFilter ? '该课程暂无学生' : '请选择课程查看学生' }}</p>
+      </div>
+      
+      <table v-else>
         <thead>
           <tr>
             <th>学生信息</th>
             <th>学号</th>
-            <th>所在课程</th>
+            <th>院系</th>
             <th>学习进度</th>
             <th>平均成绩</th>
             <th>状态</th>
@@ -51,124 +248,49 @@ import SearchBox from '@/components/SearchBox.vue'
           </tr>
         </thead>
         <tbody>
-          <tr>
+          <tr v-for="student in filteredStudents" :key="student.user_id">
             <td>
               <div class="student-info">
-                <div class="student-avatar">张</div>
-                <span>张三</span>
+                <div class="student-avatar">{{ student.real_name?.charAt(0) || '?' }}</div>
+                <span>{{ student.real_name || student.username }}</span>
               </div>
             </td>
-            <td>2021010001</td>
-            <td>Python程序设计基础</td>
+            <td>{{ student.student_no || '-' }}</td>
+            <td>{{ student.department || '-' }}</td>
             <td>
               <div style="display: flex; align-items: center; gap: 8px">
                 <div class="progress-bar">
-                  <div class="progress-fill" style="width: 75%"></div>
+                  <div class="progress-fill" :style="{ width: (student.progress || 0) + '%' }"></div>
                 </div>
-                <span>75%</span>
+                <span>{{ student.progress || 0 }}%</span>
               </div>
             </td>
-            <td>88.5</td>
-            <td><span class="status-badge active">学习中</span></td>
-            <td>2024-02-20</td>
+            <td>{{ student.avg_score?.toFixed(1) || '-' }}</td>
+            <td><span class="status-badge" :class="getStatusClass(student.status)">{{ getStatusText(student.status) }}</span></td>
+            <td>{{ student.join_time?.split(' ')[0] || '-' }}</td>
             <td>
               <div class="action-btns">
-                <button class="btn-icon">查看</button>
-                <button class="btn-icon">移除</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div class="student-info">
-                <div class="student-avatar">李</div>
-                <span>李四</span>
-              </div>
-            </td>
-            <td>2021010002</td>
-            <td>Python程序设计基础</td>
-            <td>
-              <div style="display: flex; align-items: center; gap: 8px">
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 92%"></div>
-                </div>
-                <span>92%</span>
-              </div>
-            </td>
-            <td>91.0</td>
-            <td><span class="status-badge active">学习中</span></td>
-            <td>2024-02-20</td>
-            <td>
-              <div class="action-btns">
-                <button class="btn-icon">查看</button>
-                <button class="btn-icon">移除</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div class="student-info">
-                <div class="student-avatar">王</div>
-                <span>王五</span>
-              </div>
-            </td>
-            <td>2021010003</td>
-            <td>数据结构与算法</td>
-            <td>
-              <div style="display: flex; align-items: center; gap: 8px">
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 45%"></div>
-                </div>
-                <span>45%</span>
-              </div>
-            </td>
-            <td>76.5</td>
-            <td><span class="status-badge active">学习中</span></td>
-            <td>2024-02-22</td>
-            <td>
-              <div class="action-btns">
-                <button class="btn-icon">查看</button>
-                <button class="btn-icon">移除</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div class="student-info">
-                <div class="student-avatar">赵</div>
-                <span>赵六</span>
-              </div>
-            </td>
-            <td>2021010004</td>
-            <td>Python程序设计基础</td>
-            <td>
-              <div style="display: flex; align-items: center; gap: 8px">
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 30%"></div>
-                </div>
-                <span>30%</span>
-              </div>
-            </td>
-            <td>-</td>
-            <td><span class="status-badge inactive">已退出</span></td>
-            <td>2024-02-20</td>
-            <td>
-              <div class="action-btns">
-                <button class="btn-icon">查看</button>
-                <button class="btn-icon">恢复</button>
+                <button class="btn-icon" @click="viewStudentDetail(student)">查看</button>
+                <button v-if="student.status === 1" class="btn-icon" @click="removeStudentFromCourse(student)">移除</button>
+                <button v-else class="btn-icon" @click="handleRestoreStudent(student)">恢复</button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="pagination">
-        <button>上一页</button>
-        <button class="active">1</button>
-        <button>2</button>
-        <button>3</button>
-        <button>4</button>
-        <button>5</button>
-        <button>下一页</button>
+      
+      <!-- 分页 -->
+      <div class="pagination" v-if="totalPages > 1">
+        <button :disabled="currentPage === 1" @click="changePage(currentPage - 1)">上一页</button>
+        <button 
+          v-for="page in totalPages" 
+          :key="page"
+          :class="{ active: currentPage === page }"
+          @click="changePage(page)"
+        >
+          {{ page }}
+        </button>
+        <button :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">下一页</button>
       </div>
     </div>
   </main>

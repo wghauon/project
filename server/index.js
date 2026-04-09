@@ -12,6 +12,12 @@ const { expressjwt: expressJWT } = require('express-jwt')
 const userRouter = require('./router/user')
 // 导入教师路由模块
 const teacherRouter = require('./router/teacher')
+// 导入学生路由模块
+const studentRouter = require('./router/student')
+// 导入教师考试路由模块
+const teacherExamRouter = require('./router/teacher-exam')
+// 导入管理员路由模块
+const adminRouter = require('./router/admin')
 
 // 更详细的CORS配置
 app.use(cors({
@@ -24,10 +30,10 @@ app.use(express.json())
 // 配置解析 application/x-www-form-urlencoded 格式表单数据中间件
 app.use(express.urlencoded({ extended: true }))
 // 全局注册解析token中间件
-// app.use(expressJWT({
-//   secret: config.jwtSecretKey,
-//   algorithms: ['HS256']
-// }).unless({ path: [/^\/api\//] }))
+app.use(expressJWT({
+  secret: config.jwtSecretKey,
+  algorithms: ['HS256']
+}).unless({ path: [/^\/api\//] }))
 
 // 设置静态文件目录，添加更多选项
 app.use('/uploads', (req, res, next) => {
@@ -54,6 +60,12 @@ app.use('/uploads', (req, res, next) => {
 app.use('/api',userRouter)
 // 注册教师上传路由模块
 app.use('/teacher',teacherRouter)
+// 注册学生路由模块
+app.use('/student',studentRouter)
+// 注册教师考试路由模块
+app.use('/teacher-exam',teacherExamRouter)
+// 注册管理员路由模块
+app.use('/admin',adminRouter)
 
 
 

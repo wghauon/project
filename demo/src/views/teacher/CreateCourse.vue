@@ -6,8 +6,21 @@ import router from '@/router'
 const useStore = useUserStore()
 const coverImageUrl = ref('')
 const imgInput = ref(null)
+
 // 收集表单信息
-let course_name, category_name, course_type, difficulty, description, hours, credit, status
+const course_name = ref('')
+const category_name = ref('')
+const course_type = ref('')
+const difficulty = ref('')
+const description = ref('')
+const hours = ref('')
+const credit = ref('')
+const start_time = ref('')
+const end_time = ref('')
+const join_type = ref('1') // 1公开/2申请/3邀请码/4关闭
+const invite_code = ref('')
+const status = ref(0)
+
 // 图片预览
 const handleCoverUpload = (e) => {
   const file = e.target.files[0]
@@ -24,20 +37,59 @@ const removeCover = () => {
     imgInput.value.value = ''
   }
 }
+
+// 生成邀请码
+const generateInviteCode = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let code = ''
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  invite_code.value = code
+}
+
+// 监听加入类型变化
+const handleJoinTypeChange = (type) => {
+  join_type.value = type
+  if (type === '3' && !invite_code.value) {
+    generateInviteCode()
+  }
+}
+
 // 创建课程信息
 async function upload() {
+  // 表单验证
+  if (!course_name.value || !category_name.value || !course_type.value || 
+      !difficulty.value || !description.value || !hours.value || !credit.value) {
+    alert('请填写完整的课程信息')
+    return
+  }
+  
   const formdata = new FormData()
-  formdata.append('file', imgInput.value.files[0])
-  formdata.append('course_name', course_name)
-  formdata.append('category_name', category_name)
-  formdata.append('course_type', course_type)
-  formdata.append('difficulty', difficulty)
-  formdata.append('description', description)
-  formdata.append('hours', hours)
-  formdata.append('credit', credit)
+  if (imgInput.value.files[0]) {
+    formdata.append('file', imgInput.value.files[0])
+  }
+  formdata.append('course_name', course_name.value)
+  formdata.append('category_name', category_name.value)
+  formdata.append('course_type', course_type.value)
+  formdata.append('difficulty', difficulty.value)
+  formdata.append('description', description.value)
+  formdata.append('hours', hours.value)
+  formdata.append('credit', credit.value)
+  formdata.append('start_time', start_time.value)
+  formdata.append('end_time', end_time.value)
+  formdata.append('join_type', join_type.value)
+  formdata.append('invite_code', invite_code.value)
   formdata.append('createPerson', useStore.username)
-  formdata.append('status', status)
-  await uploadService(formdata)
+  formdata.append('status', status.value)
+  
+  try {
+    await uploadService(formdata)
+    alert(status.value === 0 ? '草稿保存成功' : '课程创建成功')
+    router.push('/teacher/my-teaching')
+  } catch (error) {
+    alert('操作失败：' + (error.message || '未知错误'))
+  }
 }
 </script>
 <template>
@@ -129,11 +181,11 @@ async function upload() {
           <div class="form-row">
             <div class="form-group">
               <label>开课时间 <span class="required">*</span></label>
-              <input type="datetime-local" />
+              <input type="datetime-local" v-model="start_time" />
             </div>
             <div class="form-group">
               <label>结课时间 <span class="required">*</span></label>
-              <input type="datetime-local" />
+              <input type="datetime-local" v-model="end_time" />
             </div>
           </div>
           <div class="form-row">
@@ -152,29 +204,37 @@ async function upload() {
         <div class="form-section">
           <h2 class="section-title">🔒 加入权限</h2>
           <div class="permission-options">
-            <label class="permission-item">
-              <input type="radio" name="permission" value="open" checked />
+            <label class="permission-item" :class="{ active: join_type === '1' }" @click="handleJoinTypeChange('1')">
+              <input type="radio" name="permission" value="1" v-model="join_type" />
               <div class="permission-info">
                 <div class="permission-title">公开课程</div>
                 <div class="permission-desc">所有学生都可以自由加入课程</div>
               </div>
             </label>
-            <label class="permission-item">
-              <input type="radio" name="permission" value="apply" />
+            <label class="permission-item" :class="{ active: join_type === '2' }" @click="handleJoinTypeChange('2')">
+              <input type="radio" name="permission" value="2" v-model="join_type" />
               <div class="permission-info">
                 <div class="permission-title">申请加入</div>
                 <div class="permission-desc">学生需要提交申请，经您审核通过后方可加入</div>
               </div>
             </label>
-            <label class="permission-item">
-              <input type="radio" name="permission" value="code" />
+            <label class="permission-item" :class="{ active: join_type === '3' }" @click="handleJoinTypeChange('3')">
+              <input type="radio" name="permission" value="3" v-model="join_type" />
               <div class="permission-info">
                 <div class="permission-title">邀请码加入</div>
                 <div class="permission-desc">学生需要输入邀请码才能加入课程</div>
               </div>
             </label>
-            <label class="permission-item">
-              <input type="radio" name="permission" value="close" />
+            <!-- 邀请码显示 -->
+            <div v-if="join_type === '3'" class="invite-code-box">
+              <label>邀请码：</label>
+              <div class="code-display">
+                <span class="code">{{ invite_code }}</span>
+                <button type="button" class="btn-regenerate" @click="generateInviteCode">重新生成</button>
+              </div>
+            </div>
+            <label class="permission-item" :class="{ active: join_type === '4' }" @click="handleJoinTypeChange('4')">
+              <input type="radio" name="permission" value="4" v-model="join_type" />
               <div class="permission-info">
                 <div class="permission-title">暂不开放</div>
                 <div class="permission-desc">暂时不允许学生加入，您可以在之后修改此设置</div>
@@ -404,6 +464,49 @@ async function upload() {
 .permission-desc {
   font-size: 13px;
   color: #666;
+}
+.permission-item.active {
+  background: #f0f4ff;
+  border: 2px solid #667eea;
+}
+/* 邀请码显示 */
+.invite-code-box {
+  margin: -4px 0 8px 32px;
+  padding: 12px 16px;
+  background: #f0f4ff;
+  border-radius: 8px;
+  border: 1px dashed #667eea;
+}
+.invite-code-box label {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+  display: block;
+}
+.code-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.code {
+  font-size: 24px;
+  font-weight: bold;
+  color: #667eea;
+  letter-spacing: 4px;
+  font-family: monospace;
+}
+.btn-regenerate {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #667eea;
+  color: #667eea;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn-regenerate:hover {
+  background: #667eea;
+  color: white;
 }
 /* 按钮 */
 .form-actions {

@@ -15,7 +15,6 @@ function selectRole(r) {
 // 登录函数
 async function login(username, password, role) {
   const res = await loginService(username, password, role)
-  console.log(res.data)
   // 存储token
   useStore.setToken(res.data.token)
   // 存储身份
