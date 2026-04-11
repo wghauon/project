@@ -40,6 +40,11 @@ export const updateVideoProgress = (data) => {
   return instance.post('/student/video/progress', data)
 }
 
+// 获取课程学习进度
+export const getCourseProgress = (courseId) => {
+  return instance.get(`/student/course/${courseId}/progress`)
+}
+
 // 获取视频评论
 export const getComments = (videoId) => {
   return instance.get(`/student/video/${videoId}/comments`)

@@ -193,7 +193,24 @@ exports.updateVideoProgress = async (req, res) => {
     const { video_id, current_time, duration, is_completed } = req.body
     const studentId = req.auth.user_id
     
-    const progressPercent = Math.round((current_time / duration) * 100)
+    console.log('收到进度更新请求:', { video_id, current_time, duration, is_completed, studentId })
+
+    // 参数校验
+    if (!video_id || !studentId) {
+      console.error('参数缺失:', { video_id, studentId })
+      return res.send({ status: 1, message: '参数缺失: video_id 或 student_id 为空' })
+    }
+
+    // 防止除以零错误
+    const safeDuration = duration > 0 ? duration : 1
+    const safeCurrentTime = current_time >= 0 ? current_time : 0
+    
+    // 如果标记为完成，进度为100%，否则计算百分比
+    const progressPercent = is_completed 
+      ? 100 
+      : Math.min(100, Math.round((safeCurrentTime / safeDuration) * 100))
+    
+    console.log('准备更新进度:', { video_id, studentId, safeCurrentTime, safeDuration, progressPercent, is_completed })
     
     // 检查是否已有记录
     const [existing] = await db.execute(
@@ -201,21 +218,129 @@ exports.updateVideoProgress = async (req, res) => {
       [video_id, studentId]
     )
     
+    console.log('查询现有记录:', existing.length > 0 ? '找到记录' : '未找到记录')
+    
     if (existing.length > 0) {
-      await db.execute(`
+      const [updateResult] = await db.execute(`
         UPDATE video_progress 
-        SET current_time = ?, duration = ?, progress_percent = ?, is_completed = ?, 
-            watch_count = watch_count + 1, last_watch_at = NOW()
-        WHERE video_id = ? AND student_id = ?
-      `, [current_time, duration, progressPercent, is_completed ? 1 : 0, video_id, studentId])
+        SET \`current_time\` = ?, \`duration\` = ?, \`progress_percent\` = ?, \`is_completed\` = ?, 
+            \`watch_count\` = \`watch_count\` + 1, \`last_watch_at\` = NOW()
+        WHERE \`video_id\` = ? AND \`student_id\` = ?
+      `, [safeCurrentTime, safeDuration, progressPercent, is_completed ? 1 : 0, video_id, studentId])
+      console.log('UPDATE结果:', updateResult)
     } else {
-      await db.execute(`
-        INSERT INTO video_progress (video_id, student_id, current_time, duration, progress_percent, is_completed, watch_count, last_watch_at, created_at)
+      const [insertResult] = await db.execute(`
+        INSERT INTO video_progress (\`video_id\`, \`student_id\`, \`current_time\`, \`duration\`, \`progress_percent\`, \`is_completed\`, \`watch_count\`, \`last_watch_at\`, \`created_at\`)
         VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
-      `, [video_id, studentId, current_time, duration, progressPercent, is_completed ? 1 : 0])
+      `, [video_id, studentId, safeCurrentTime, safeDuration, progressPercent, is_completed ? 1 : 0])
+      console.log('INSERT结果:', insertResult)
     }
     
+    // 更新课程总进度
+    await updateCourseProgress(studentId, video_id)
+    
     res.send({ status: 0, message: '进度更新成功' })
+  } catch (err) {
+    console.error('更新进度失败:', err)
+    res.send({ status: 1, message: err.message })
+  }
+}
+
+// 更新课程总进度
+async function updateCourseProgress(studentId, videoId) {
+  try {
+    // 获取视频所属课程ID
+    const [videos] = await db.execute(
+      'SELECT course_id FROM videos WHERE video_id = ?',
+      [videoId]
+    )
+    if (videos.length === 0) return
+    
+    const courseId = videos[0].course_id
+    
+    // 获取课程所有视频
+    const [courseVideos] = await db.execute(
+      'SELECT video_id FROM videos WHERE course_id = ? AND status = 1',
+      [courseId]
+    )
+    
+    if (courseVideos.length === 0) return
+    
+    // 获取学生已完成视频数量
+    const videoIds = courseVideos.map(v => v.video_id)
+    const placeholders = videoIds.map(() => '?').join(',')
+    
+    const [completedVideos] = await db.execute(
+      `SELECT COUNT(*) as count FROM video_progress 
+       WHERE student_id = ? AND video_id IN (${placeholders}) AND is_completed = 1`,
+      [studentId, ...videoIds]
+    )
+    
+    // 计算课程进度百分比
+    const completedCount = completedVideos[0].count
+    const totalCount = courseVideos.length
+    const courseProgress = Math.round((completedCount / totalCount) * 100)
+    
+    // 更新选课记录中的进度
+    await db.execute(
+      'UPDATE course_enrollments SET progress = ? WHERE course_id = ? AND student_id = ?',
+      [courseProgress, courseId, studentId]
+    )
+  } catch (err) {
+    console.error('更新课程进度失败:', err)
+  }
+}
+
+// 获取课程学习进度
+exports.getCourseProgress = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    const studentId = req.auth.user_id
+    
+    // 获取课程总体进度
+    const [enrollment] = await db.execute(
+      'SELECT progress FROM course_enrollments WHERE course_id = ? AND student_id = ? AND status = 1',
+      [courseId, studentId]
+    )
+    
+    if (enrollment.length === 0) {
+      return res.send({ status: 1, message: '未找到选课记录' })
+    }
+    
+    const courseProgress = enrollment[0].progress || 0
+    
+    // 获取所有视频及其学习进度
+    const [videos] = await db.execute(`
+      SELECT 
+        v.video_id,
+        v.video_name,
+        v.duration,
+        vp.progress_percent,
+        vp.is_completed,
+        vp.current_time,
+        vp.watch_count
+      FROM videos v
+      LEFT JOIN video_progress vp ON v.video_id = vp.video_id AND vp.student_id = ?
+      WHERE v.course_id = ? AND v.status = 1
+      ORDER BY v.video_no ASC
+    `, [studentId, courseId])
+    
+    // 统计信息
+    const totalVideos = videos.length
+    const completedVideos = videos.filter(v => v.is_completed).length
+    const inProgressVideos = videos.filter(v => v.progress_percent > 0 && !v.is_completed).length
+    
+    res.send({
+      status: 0,
+      message: '获取成功',
+      data: {
+        course_progress: courseProgress,
+        total_videos: totalVideos,
+        completed_videos: completedVideos,
+        in_progress_videos: inProgressVideos,
+        videos: videos
+      }
+    })
   } catch (err) {
     res.send({ status: 1, message: err.message })
   }

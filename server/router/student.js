@@ -27,6 +27,9 @@ router.get('/video/:videoId', studentHandler.getVideoDetail)
 // 更新视频学习进度
 router.post('/video/progress', studentHandler.updateVideoProgress)
 
+// 获取课程学习进度
+router.get('/course/:courseId/progress', studentHandler.getCourseProgress)
+
 // 获取视频评论
 router.get('/video/:videoId/comments', studentHandler.getComments)
 

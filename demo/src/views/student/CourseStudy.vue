@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getCourseDetail, getChapters, getVideos, getComments, addComment, likeVideo, getMaterials, updateVideoProgress } from '@/api/student'
+import { getCourseDetail, getChapters, getVideos, getComments, addComment, likeVideo, getMaterials, updateVideoProgress, getCourseProgress } from '@/api/student'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,8 +32,12 @@ const currentVideo = ref({
   video_id: null,
   video_name: '',
   video_url: '',
-  description: ''
+  description: '',
+  duration: 0
 })
+
+// 视频播放器引用
+const videoPlayer = ref(null)
 
 // 评论列表
 const comments = ref([])
@@ -43,6 +47,14 @@ const newComment = ref('')
 
 // 学习资料
 const materials = ref([])
+
+// 课程学习进度
+const courseProgress = ref({
+  course_progress: 0,
+  total_videos: 0,
+  completed_videos: 0,
+  in_progress_videos: 0
+})
 
 // 获取课程详情
 const fetchCourseDetail = async () => {
@@ -118,21 +130,24 @@ const fetchMaterials = async () => {
   }
 }
 
+// 获取课程学习进度
+const fetchCourseProgress = async () => {
+  try {
+    const res = await getCourseProgress(courseId.value)
+    if (res.data.status === 0) {
+      courseProgress.value = res.data.data
+    }
+  } catch (error) {
+    console.error('获取课程进度失败:', error)
+  }
+}
+
 // 切换视频
 const switchVideo = async (video) => {
+  // 重置保存时间记录
+  lastSavedTime = 0
   currentVideo.value = video
   await fetchComments()
-  // 更新视频进度
-  try {
-    await updateVideoProgress({
-      video_id: video.video_id,
-      current_time: 0,
-      duration: 0,
-      is_completed: false
-    })
-  } catch (error) {
-    console.error('更新进度失败:', error)
-  }
 }
 
 // 提交评论
@@ -187,14 +202,61 @@ const goBack = () => {
   router.push('/student/my-courses')
 }
 
+// 视频播放进度更新（定时保存进度）
+let lastSavedTime = 0
+const handleVideoTimeUpdate = async () => {
+  if (!videoPlayer.value) return
+
+  const currentTime = Math.floor(videoPlayer.value.currentTime)
+  const duration = Math.floor(videoPlayer.value.duration || currentVideo.value.duration || 0)
+
+  // 短视频（小于10秒）：每秒保存一次
+  // 长视频（大于等于10秒）：每10秒保存一次
+  const saveInterval = duration < 10 ? 1 : 10
+
+  // 保存进度条件：
+  // 1. 到达保存间隔时间点
+  // 2. 播放超过90%标记为完成
+  // 3. 确保不会重复保存同一时间点
+  const shouldSave = (currentTime % saveInterval === 0 && currentTime !== lastSavedTime && currentTime > 0)
+  const isCompleted = duration > 0 && (currentTime / duration) >= 0.9
+
+  if (shouldSave || isCompleted) {
+    try {
+      await updateVideoProgress({
+        video_id: currentVideo.value.video_id,
+        current_time: currentTime,
+        duration: duration,
+        is_completed: isCompleted
+      })
+
+      // 记录上次保存的时间点
+      lastSavedTime = currentTime
+
+      // 如果完成了，更新本地状态
+      if (isCompleted) {
+        const video = allVideos.value.find(v => v.video_id === currentVideo.value.video_id)
+        if (video && !video.is_completed) {
+          video.is_completed = true
+          // 刷新课程进度
+          await fetchCourseProgress()
+        }
+      }
+    } catch (error) {
+      console.error('保存进度失败:', error)
+    }
+  }
+}
+
 // 视频播放结束处理
 const handleVideoEnded = async () => {
   // 标记当前视频为已完成
   try {
+    const duration = Math.floor(videoPlayer.value?.duration || currentVideo.value.duration || 0)
     await updateVideoProgress({
       video_id: currentVideo.value.video_id,
-      current_time: 0,
-      duration: 0,
+      current_time: duration,
+      duration: duration,
       is_completed: true
     })
     // 更新本地状态
@@ -202,6 +264,8 @@ const handleVideoEnded = async () => {
     if (video) {
       video.is_completed = true
     }
+    // 刷新课程进度
+    await fetchCourseProgress()
     // 自动播放下一个视频
     const currentIndex = allVideos.value.findIndex(v => v.video_id === currentVideo.value.video_id)
     if (currentIndex < allVideos.value.length - 1) {
@@ -220,6 +284,7 @@ onMounted(async () => {
   await fetchVideos()
   await fetchMaterials()
   await fetchComments()
+  await fetchCourseProgress()
   loading.value = false
 })
 </script>
@@ -240,10 +305,12 @@ onMounted(async () => {
         <div class="video-player">
           <video
             v-if="currentVideo.video_url"
+            ref="videoPlayer"
             :src="currentVideo.video_url"
             controls
             class="video-element"
             @ended="handleVideoEnded"
+            @timeupdate="handleVideoTimeUpdate"
           ></video>
           <div v-else class="video-placeholder">
             <div class="play-icon">▶</div>
@@ -300,6 +367,33 @@ onMounted(async () => {
 
       <!-- 右侧章节列表 -->
       <div class="sidebar">
+        <!-- 学习进度概览 -->
+        <div class="progress-overview">
+          <h3>📊 学习进度</h3>
+          <div class="progress-stats">
+            <div class="progress-circle">
+              <span class="progress-percent">{{ courseProgress.course_progress }}%</span>
+            </div>
+            <div class="progress-detail">
+              <div class="stat-item">
+                <span class="stat-label">总课时</span>
+                <span class="stat-value">{{ courseProgress.total_videos }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">已完成</span>
+                <span class="stat-value completed">{{ courseProgress.completed_videos }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">学习中</span>
+                <span class="stat-value in-progress">{{ courseProgress.in_progress_videos }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" :style="{ width: courseProgress.course_progress + '%' }"></div>
+          </div>
+        </div>
+
         <!-- 课时列表 -->
         <div class="chapters-section">
           <h3>📚 课程目录 ({{ allVideos.length }}个课时)</h3>
@@ -564,6 +658,76 @@ onMounted(async () => {
   flex-direction: column;
   gap: 24px;
 }
+
+/* 学习进度概览 */
+.progress-overview {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+}
+.progress-overview h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+}
+.progress-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+.progress-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.progress-percent {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+.progress-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.stat-label {
+  color: #666;
+}
+.stat-value {
+  font-weight: bold;
+  color: #333;
+}
+.stat-value.completed {
+  color: #43e97b;
+}
+.stat-value.in-progress {
+  color: #667eea;
+}
+.progress-bar-container {
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
 .chapters-section,
 .materials-section {
   background: white;
