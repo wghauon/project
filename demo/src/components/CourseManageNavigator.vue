@@ -1,10 +1,30 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useTeacherStore } from '@/stores/teacher'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 const router = useRouter()
+const route = useRoute()
 const teacherStore = useTeacherStore()
 const selected = ref(1)
+
+// 根据当前路由设置选中状态
+const updateSelectedFromRoute = () => {
+  const path = route.path
+  if (path.includes('/chapter-manage')) {
+    selected.value = 1
+  } else if (path.includes('/video-manage')) {
+    selected.value = 2
+  } else if (path.includes('/material-manage')) {
+    selected.value = 3
+  }
+}
+
+// 初始化时设置选中状态
+updateSelectedFromRoute()
+
+// 监听路由变化
+watch(() => route.path, updateSelectedFromRoute)
+
 function change(s) {
   selected.value = s
 }
@@ -37,7 +57,16 @@ function change(s) {
       <span class="menu-icon">📹</span>
       <span class="menu-text">视频管理</span>
     </div>
-    <div class="menu-item">
+    <div
+      class="menu-item"
+      :class="{ active: selected === 3 }"
+      @click="
+        () => {
+          router.push(`/teacher/course-manage/${teacherStore.course_id}/material-manage`)
+          change(3)
+        }
+      "
+    >
       <span class="menu-icon">📎</span>
       <span class="menu-text">资料管理</span>
     </div>

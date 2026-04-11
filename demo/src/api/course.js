@@ -19,3 +19,11 @@ export const courseDetailSearch = (course_id) => {
     },
   })
 }
+// 获取教师统计数据
+export const getTeacherStats = (teacher_id) => {
+  return instance.get('/teacher/stats', {
+    params: {
+      teacher_id,
+    },
+  })
+}

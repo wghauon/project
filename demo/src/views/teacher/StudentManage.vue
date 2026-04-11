@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import SearchBox from '@/components/SearchBox.vue'
-import { getCourseStudents, removeStudent, restoreStudent as restoreStudentAPI, getStudentProgress, getTeacherCourses } from '@/api/teacher'
+import { getCourseStudents, removeStudent , restoreStudentAPI, getStudentProgress, getTeacherCourses } from '@/api/teacher'
 
 // 学生列表
 const students = ref([])
@@ -44,29 +44,33 @@ const fetchStudents = async () => {
     total.value = 0
     return
   }
-  
+
   loading.value = true
   try {
     const res = await getCourseStudents(courseFilter.value)
     if (res.data.status === 0) {
       let data = res.data.data || []
-      
+
       // 状态筛选
+      // course_enrollments.status: 0待审核/1已通过/2已拒绝/3已退课
       if (statusFilter.value) {
-        const status = statusFilter.value === 'active' ? 1 : 0
-        data = data.filter(s => s.status === status)
+        if (statusFilter.value === 'active') {
+          data = data.filter(s => s.status === 1) // 已通过
+        } else if (statusFilter.value === 'inactive') {
+          data = data.filter(s => s.status === 3) // 已退课
+        }
       }
-      
+
       // 关键词搜索
       if (searchKeyword.value) {
         const keyword = searchKeyword.value.toLowerCase()
-        data = data.filter(s => 
+        data = data.filter(s =>
           s.real_name?.toLowerCase().includes(keyword) ||
           s.username?.toLowerCase().includes(keyword) ||
           s.student_no?.toLowerCase().includes(keyword)
         )
       }
-      
+
       students.value = data
       total.value = data.length
     }
@@ -170,13 +174,24 @@ const totalPages = computed(() => {
 })
 
 // 获取状态文本
+// course_enrollments.status: 0待审核/1已通过/2已拒绝/3已退课
 const getStatusText = (status) => {
-  return status === 1 ? '学习中' : '已退出'
+  const statusMap = {
+    0: '待审核',
+    1: '学习中',
+    2: '已拒绝',
+    3: '已退出'
+  }
+  return statusMap[status] || '未知'
 }
 
 // 获取状态样式类
 const getStatusClass = (status) => {
-  return status === 1 ? 'active' : 'inactive'
+  // course_enrollments.status: 0待审核/1已通过/2已拒绝/3已退课
+  if (status === 1) return 'active'
+  if (status === 0) return 'pending'
+  if (status === 2) return 'rejected'
+  return 'inactive'
 }
 
 onMounted(() => {
@@ -221,19 +236,19 @@ onMounted(() => {
           <button class="btn-secondary" @click="exportStudents">📤 导出名单</button>
         </div>
       </div>
-      
+
       <!-- 加载状态 -->
       <div v-if="loading" class="loading-state">
         <div class="loading-spinner"></div>
         <p>正在加载学生列表...</p>
       </div>
-      
+
       <!-- 空状态 -->
       <div v-else-if="students.length === 0" class="empty-state">
         <div class="empty-icon">👨‍🎓</div>
         <p>{{ courseFilter ? '该课程暂无学生' : '请选择课程查看学生' }}</p>
       </div>
-      
+
       <table v-else>
         <thead>
           <tr>
@@ -278,12 +293,12 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
-      
+
       <!-- 分页 -->
       <div class="pagination" v-if="totalPages > 1">
         <button :disabled="currentPage === 1" @click="changePage(currentPage - 1)">上一页</button>
-        <button 
-          v-for="page in totalPages" 
+        <button
+          v-for="page in totalPages"
           :key="page"
           :class="{ active: currentPage === page }"
           @click="changePage(page)"
@@ -439,6 +454,14 @@ tr:hover {
 .status-badge.active {
   background: #e8f5e9;
   color: #4caf50;
+}
+.status-badge.pending {
+  background: #fff3e0;
+  color: #ff9800;
+}
+.status-badge.rejected {
+  background: #fce4ec;
+  color: #e91e63;
 }
 .status-badge.inactive {
   background: #ffebee;

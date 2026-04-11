@@ -4,6 +4,7 @@ import { onMounted, ref, computed } from 'vue'
 import { courseDetailSearch } from '@/api/course'
 import { getTeacherCourses, getChapters, addChapter as addChapterAPI, updateChapter as updateChapterAPI, deleteChapter as deleteChapterAPI, getVideos, deleteVideo as deleteVideoAPI } from '@/api/teacher'
 import { useTeacherStore } from '@/stores/teacher'
+import CourseManageNavigator from '@/components/CourseManageNavigator.vue'
 
 const teacherStore = useTeacherStore()
 const route = useRoute()
@@ -241,140 +242,11 @@ const editCourseInfo = () => {
 
     <!-- 管理区域 -->
     <div class="manage-container">
+      <CourseManageNavigator></CourseManageNavigator>
       <!-- 内容区 -->
-      <div class="content-area" style="width: 100%;">
-        <!-- 标签切换 -->
-        <div class="content-tabs">
-          <button 
-            :class="{ active: activeTab === 'chapter' }" 
-            @click="switchTab('chapter')"
-          >
-            📚 章节管理
-          </button>
-          <button 
-            :class="{ active: activeTab === 'video' }" 
-            @click="switchTab('video')"
-          >
-            📹 视频管理
-          </button>
-          <button 
-            :class="{ active: activeTab === 'material' }" 
-            @click="switchTab('material')"
-          >
-            📎 资料管理
-          </button>
-          <button 
-            :class="{ active: activeTab === 'student' }" 
-            @click="switchTab('student')"
-          >
-            👨‍🎓 学生管理
-          </button>
-        </div>
+      <div class="content-area">
+        <router-view></router-view>
 
-        <!-- 章节管理 -->
-        <div v-if="activeTab === 'chapter'" class="tab-content">
-          <div class="section-header">
-            <h3>章节列表</h3>
-            <button class="btn-add" @click="addChapter">+ 添加章节</button>
-          </div>
-          <div class="chapter-list">
-            <div v-for="(chapter, index) in chapters" :key="chapter.chapter_id" class="chapter-item">
-              <div class="chapter-info">
-                <span class="chapter-number">第{{ index + 1 }}章</span>
-                <span class="chapter-name">{{ chapter.chapter_name }}</span>
-                <span class="chapter-videos">{{ chapter.video_count }}个视频</span>
-                <span v-if="chapter.is_required" class="required-tag">必修</span>
-              </div>
-              <div class="chapter-actions">
-                <button class="btn-edit" @click="editChapter(chapter)">编辑</button>
-                <button class="btn-delete" @click="deleteChapter(chapter)">删除</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 视频管理 -->
-        <div v-if="activeTab === 'video'" class="tab-content">
-          <div class="section-header">
-            <h3>视频列表</h3>
-            <button class="btn-add" @click="uploadVideo">+ 上传视频</button>
-          </div>
-          <div class="video-list">
-            <div v-for="video in videos" :key="video.video_id" class="video-item">
-              <div class="video-info">
-                <div class="video-name">{{ video.video_name }}</div>
-                <div class="video-meta">
-                  <span>{{ video.chapter_name }}</span>
-                  <span>⏱ {{ video.duration }}</span>
-                  <span>👁 {{ video.view_count }}次观看</span>
-                </div>
-              </div>
-              <div class="video-actions">
-                <button class="btn-edit" @click="editVideo(video)">编辑</button>
-                <button class="btn-delete" @click="deleteVideo(video)">删除</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 资料管理 -->
-        <div v-if="activeTab === 'material'" class="tab-content">
-          <div class="section-header">
-            <h3>资料列表</h3>
-            <button class="btn-add">+ 上传资料</button>
-          </div>
-          <div class="empty-state">
-            <div class="empty-icon">📎</div>
-            <p>暂无资料</p>
-            <button class="btn-add-empty">上传资料</button>
-          </div>
-        </div>
-
-        <!-- 学生管理 -->
-        <div v-if="activeTab === 'student'" class="tab-content">
-          <div class="section-header">
-            <h3>学生列表</h3>
-            <div class="search-box">
-              <input type="text" placeholder="搜索学生..." />
-              <button>搜索</button>
-            </div>
-          </div>
-          <div class="student-list">
-            <div class="student-item header">
-              <span>学号</span>
-              <span>姓名</span>
-              <span>进度</span>
-              <span>操作</span>
-            </div>
-            <div class="student-item">
-              <span>2024001</span>
-              <span>张三</span>
-              <span class="progress-bar">
-                <span class="progress-fill" style="width: 65%"></span>
-                <span class="progress-text">65%</span>
-              </span>
-              <button class="btn-view">查看</button>
-            </div>
-            <div class="student-item">
-              <span>2024002</span>
-              <span>李四</span>
-              <span class="progress-bar">
-                <span class="progress-fill" style="width: 42%"></span>
-                <span class="progress-text">42%</span>
-              </span>
-              <button class="btn-view">查看</button>
-            </div>
-            <div class="student-item">
-              <span>2024003</span>
-              <span>王五</span>
-              <span class="progress-bar">
-                <span class="progress-fill" style="width: 88%"></span>
-                <span class="progress-text">88%</span>
-              </span>
-              <button class="btn-view">查看</button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </main>
@@ -482,7 +354,9 @@ const editCourseInfo = () => {
 
 /* 管理区域 */
 .manage-container {
-  display: block;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
 }
 
 /* 内容区 */

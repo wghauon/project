@@ -1,41 +1,113 @@
 <script setup>
 import router from '@/router'
-defineProps({
+import { deleteVideo } from '@/api/teacher'
+
+const props = defineProps({
   item: {
     type: Object,
-    require: true,
+    required: true,
   },
 })
+
+const emit = defineEmits(['delete'])
+
+// 格式化时长（秒 -> mm:ss 或 hh:mm:ss）
+const formatDuration = (seconds) => {
+  if (!seconds) return '00:00'
+  const hours = Math.floor(seconds / 3600)
+  const mins = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  if (hours > 0) {
+    return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
+// 格式化文件大小
+const formatFileSize = (bytes) => {
+  if (!bytes) return '-'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let size = bytes
+  let unitIndex = 0
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024
+    unitIndex++
+  }
+  return `${size.toFixed(1)}${units[unitIndex]}`
+}
+
+// 格式化日期
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+}
+
+// 获取状态文本和样式
+const getStatusInfo = (status) => {
+  const statusMap = {
+    0: { text: '草稿', class: 'draft' },
+    1: { text: '已发布', class: 'published' },
+    2: { text: '处理中', class: 'processing' },
+  }
+  return statusMap[status] || { text: '未知', class: 'draft' }
+}
+
+// 编辑视频
+const handleEdit = () => {
+  router.push(`/teacher/video-edit/${props.item.video_id}`)
+}
+
+// 删除视频
+const handleDelete = async () => {
+  if (!confirm('确定要删除这个视频吗？此操作不可恢复。')) {
+    return
+  }
+  try {
+    const res = await deleteVideo(props.item.video_id)
+    if (res.data.status === 0) {
+      alert('删除成功')
+      emit('delete', props.item.video_id)
+    } else {
+      alert(res.data.message || '删除失败')
+    }
+  } catch (error) {
+    console.error('删除失败:', error)
+    alert('删除失败，请稍后重试')
+  }
+}
 </script>
 <template>
   <div class="video-item">
     <div class="video-thumbnail">
       🎬
-      <span class="video-duration">15:30</span>
+      <span class="video-duration">{{ formatDuration(item.duration) }}</span>
     </div>
     <div class="video-info">
       <div class="video-header">
         <div>
           <h3 class="video-title">{{ item.video_name }}</h3>
-          <p class="video-chapter">{{ item.description }}</p>
+          <p class="video-chapter">{{ item.description || '暂无描述' }}</p>
         </div>
-        <span class="video-status published">已发布</span>
+        <span class="video-status" :class="getStatusInfo(item.status).class">
+          {{ getStatusInfo(item.status).text }}
+        </span>
       </div>
       <div class="video-meta">
-        <span>📊 1,234次播放</span>
-        <span>💬 45条评论</span>
-        <span>👍 89%好评</span>
-        <span>📅 2024-03-15上传</span>
-        <span>💾 156MB</span>
+        <span>📊 {{ item.view_count || 0 }}次播放</span>
+        <span>💬 0条评论</span>
+        <span>👍 0%好评</span>
+        <span>📅 {{ formatDate(item.created_at) }}上传</span>
+        <span>💾 {{ formatFileSize(item.file_size) }}</span>
       </div>
     </div>
     <div class="video-actions">
       <button class="btn-icon" @click="router.push(`/teacher/video-preview/${item.video_id}`)">
         ▶️ 预览
       </button>
-      <button class="btn-icon">✏️ 编辑</button>
+      <button class="btn-icon" @click="handleEdit">✏️ 编辑</button>
       <button class="btn-icon">📊 数据</button>
-      <button class="btn-icon">🗑️ 删除</button>
+      <button class="btn-icon" @click="handleDelete">🗑️ 删除</button>
     </div>
   </div>
 </template>

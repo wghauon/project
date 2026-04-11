@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getExamList, createExam as createExamAPI, updateExam as updateExamAPI, deleteExam as deleteExamAPI, publishExam as publishExamAPI, getExamQuestions, addQuestion as addQuestionAPI, deleteQuestion as deleteQuestionAPI } from '@/api/teacher'
+import { getExamList, createExam as createExamAPI, updateExam as updateExamAPI, deleteExam as deleteExamAPI, publishExam as publishExamAPI, getExamQuestions, addQuestion as addQuestionAPI, deleteQuestion as deleteQuestionAPI, getTeacherCourses } from '@/api/teacher'
 
 const router = useRouter()
 
@@ -12,11 +12,15 @@ const activeTab = ref('all')
 const exams = ref([])
 const loading = ref(false)
 
+// 课程列表
+const courses = ref([])
+
 // 创建考试弹窗
 const showCreateModal = ref(false)
 const newExam = ref({
   title: '',
   course_id: '',
+  description: '',
   duration: 120,
   start_time: '',
   end_time: '',
@@ -85,7 +89,7 @@ const handleCreateExam = async () => {
     alert('请填写完整的考试信息')
     return
   }
-  
+
   try {
     const res = await createExamAPI(newExam.value)
     if (res.data.status === 0) {
@@ -95,6 +99,7 @@ const handleCreateExam = async () => {
       newExam.value = {
         title: '',
         course_id: '',
+        description: '',
         duration: 120,
         start_time: '',
         end_time: '',
@@ -114,6 +119,23 @@ const handleCreateExam = async () => {
 const editExam = (exam) => {
   editingExam.value = { ...exam }
   showEditModal.value = true
+}
+
+// 保存编辑
+const saveEdit = async () => {
+  try {
+    const res = await updateExamAPI(editingExam.value.exam_id, editingExam.value)
+    if (res.data.status === 0) {
+      alert('考试更新成功')
+      showEditModal.value = false
+      fetchExams()
+    } else {
+      alert(res.data.message || '更新失败')
+    }
+  } catch (error) {
+    console.error('更新考试失败:', error)
+    alert('更新失败，请稍后重试')
+  }
 }
 
 // 删除考试
@@ -228,8 +250,23 @@ const viewScores = (exam) => {
   alert(`查看"${exam.title}"的成绩统计`)
 }
 
+// 获取课程列表
+const fetchCourses = async () => {
+  try {
+    const res = await getTeacherCourses()
+    if (res.data.status === 0) {
+      courses.value = res.data.data || []
+    } else {
+      console.error('获取课程列表失败:', res.data.message)
+    }
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
+  }
+}
+
 onMounted(() => {
   fetchExams()
+  fetchCourses()
 })
 </script>
 
@@ -261,10 +298,13 @@ onMounted(() => {
           <label>所属课程</label>
           <select v-model="newExam.course_id">
             <option value="">请选择课程</option>
-            <option value="1">Python程序设计基础</option>
-            <option value="2">数据结构与算法</option>
-            <option value="3">高等数学（上）</option>
+            <option v-for="course in courses" :key="course.course_id" :value="course.course_id">
+              {{ course.course_name }}
+            </option>
           </select>
+          <p v-if="courses.length === 0" class="form-hint" style="color: #f44336; margin-top: 8px;">
+            暂无课程，请先创建课程
+          </p>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -337,8 +377,8 @@ onMounted(() => {
             <textarea v-model="question.question_text" placeholder="请输入题目内容" rows="2"></textarea>
             <div class="options-list">
               <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item">
-                <input 
-                  type="radio" 
+                <input
+                  type="radio"
                   :name="'correct_' + question.question_id"
                   :value="String.fromCharCode(65 + optIndex)"
                   v-model="question.correct_answer"

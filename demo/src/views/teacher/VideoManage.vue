@@ -2,14 +2,54 @@
 import SearchBox from '@/components/SearchBox.vue'
 import VideoItem from '@/components/VideoItem.vue'
 import router from '@/router'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useTeacherStore } from '@/stores/teacher'
 import { videoSearch } from '@/api/video'
 const teacherStore = useTeacherStore()
 const videoList = ref([])
-onMounted(async () => {
-  const res = await videoSearch(teacherStore.course_id)
-  videoList.value = res.data.data
+const loading = ref(false)
+const error = ref('')
+
+// 统计视频状态
+const stats = computed(() => {
+  const total = videoList.value.length
+  const published = videoList.value.filter(v => v.status === 1).length
+  const draft = videoList.value.filter(v => v.status === 0).length
+  const processing = videoList.value.filter(v => v.status === 2).length
+  return { total, published, draft, processing }
+})
+
+const fetchVideos = async () => {
+  if (!teacherStore.course_id) {
+    error.value = '请先选择课程'
+    return
+  }
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await videoSearch(teacherStore.course_id)
+    if (res.data.status === 0) {
+      videoList.value = res.data.data || []
+    } else {
+      error.value = res.data.message || '获取视频列表失败'
+      videoList.value = []
+    }
+  } catch (err) {
+    console.error('获取视频列表失败:', err)
+    error.value = '获取视频列表失败'
+    videoList.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+// 处理视频删除
+const handleVideoDelete = (videoId) => {
+  videoList.value = videoList.value.filter(item => item.video_id !== videoId)
+}
+
+onMounted(() => {
+  fetchVideos()
 })
 </script>
 
@@ -23,19 +63,19 @@ onMounted(async () => {
     <!-- 统计卡片 -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-value">{{ videoList.length }}</div>
+        <div class="stat-value">{{ stats.total }}</div>
         <div class="stat-label">视频总数</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">28</div>
+        <div class="stat-value">{{ stats.published }}</div>
         <div class="stat-label">已发布</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">3</div>
+        <div class="stat-value">{{ stats.processing }}</div>
         <div class="stat-label">处理中</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">1</div>
+        <div class="stat-value">{{ stats.draft }}</div>
         <div class="stat-label">草稿</div>
       </div>
     </div>
@@ -59,9 +99,28 @@ onMounted(async () => {
       <SearchBox></SearchBox>
     </div>
 
+    <!-- 错误提示 -->
+    <div v-if="error" class="error-message">
+      <p>{{ error }}</p>
+      <button v-if="teacherStore.course_id" class="btn-primary" @click="fetchVideos">重新加载</button>
+    </div>
+
+    <!-- 加载状态 -->
+    <div v-else-if="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>正在加载视频列表...</p>
+    </div>
+
+    <!-- 空状态 -->
+    <div v-else-if="videoList.length === 0" class="empty-state">
+      <div class="empty-icon">🎬</div>
+      <p>暂无视频</p>
+      <button class="btn-primary" @click="router.push('/teacher/video-upload')">上传视频</button>
+    </div>
+
     <!-- 视频列表 -->
-    <div class="video-list">
-      <VideoItem v-for="item in videoList" :key="item.video_id" :item="item"></VideoItem>
+    <div v-else class="video-list">
+      <VideoItem v-for="item in videoList" :key="item.video_id" :item="item" @delete="handleVideoDelete"></VideoItem>
     </div>
 
     <!-- 分页 -->
@@ -160,6 +219,56 @@ onMounted(async () => {
   top: 50%;
   transform: translateY(-50%);
 }
+/* 错误提示 */
+.error-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #f44336;
+}
+.error-message p {
+  margin-bottom: 16px;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #666;
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #999;
+}
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+.empty-state p {
+  margin-bottom: 16px;
+}
+
 /* 视频列表 */
 .video-list {
   display: flex;

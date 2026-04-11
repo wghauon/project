@@ -2,13 +2,28 @@
 import CourseCard from '@/components/CourseCard.vue'
 import router from '@/router'
 import { useUserStore } from '@/stores/user'
-import { courseListSearch } from '@/api/course'
+import { courseListSearch, getTeacherStats } from '@/api/course'
 import { ref, onMounted } from 'vue'
+
 const userStore = useUserStore()
 const courseList = ref([])
+const stats = ref({
+  course_count: 0,
+  student_count: 0,
+  pending_homework: 0,
+  new_discussions: 0
+})
+
 onMounted(async () => {
+  // 获取课程列表
   const res = await courseListSearch(userStore.user_id)
   courseList.value = res.data.data
+  
+  // 获取教师统计数据
+  const statsRes = await getTeacherStats(userStore.user_id)
+  if (statsRes.data.status === 0) {
+    stats.value = statsRes.data.data
+  }
 })
 </script>
 <template>
@@ -26,7 +41,7 @@ onMounted(async () => {
       <div class="stat-card">
         <div class="stat-icon">📚</div>
         <div class="stat-info">
-          <h3>{{ courseList.length }}</h3>
+          <h3>{{ stats.course_count }}</h3>
           <p>在授课程</p>
         </div>
       </div>
@@ -38,7 +53,7 @@ onMounted(async () => {
           👨‍🎓
         </div>
         <div class="stat-info">
-          <h3>286</h3>
+          <h3>{{ stats.student_count }}</h3>
           <p>学生总数</p>
         </div>
       </div>
@@ -50,7 +65,7 @@ onMounted(async () => {
           📝
         </div>
         <div class="stat-info">
-          <h3>12</h3>
+          <h3>{{ stats.pending_homework }}</h3>
           <p>待批改作业</p>
         </div>
       </div>
@@ -62,7 +77,7 @@ onMounted(async () => {
           💬
         </div>
         <div class="stat-info">
-          <h3>45</h3>
+          <h3>{{ stats.new_discussions }}</h3>
           <p>新讨论</p>
         </div>
       </div>

@@ -1,12 +1,14 @@
 const express = require('express')
 const router = express.Router()
-const { imgStorage, videoStorage } = require('../middleware/upload')
+const { imgStorage, videoStorage, fileStorage } = require('../middleware/upload')
 const teacher = require('../router_handler/teacher')
 
 // 课程信息上传接口
 router.post('/upload', imgStorage.single('file'), teacher.course)
 // 课程列表查询接口
 router.get('/course_list',teacher.courseListSearch)
+// 获取教师课程列表（用于下拉选择等）
+router.get('/courses', teacher.getTeacherCourses)
 // 课程详细查询接口
 router.get('/course_detail',teacher.courseDetail)
 // 视频列表查询接口
@@ -26,12 +28,18 @@ router.get('/course/:courseId/chapters', teacher.getChapters)
 router.get('/chapters', teacher.getChapters)
 // 添加章节
 router.post('/chapter', teacher.addChapter)
+// 获取章节详情
+router.get('/chapter/:chapterId', teacher.getChapterDetail)
 // 更新章节
 router.put('/chapter/:chapterId', teacher.updateChapter)
 // 删除章节
 router.delete('/chapter/:chapterId', teacher.deleteChapter)
 // 删除视频
 router.delete('/video/:videoId', teacher.deleteVideo)
+// 更新视频
+router.put('/video/:videoId', teacher.updateVideo)
+// 获取视频详情
+router.get('/video_detail', teacher.getVideoDetail)
 
 // ==================== 学生管理路由 ====================
 // 获取课程学生列表
@@ -42,5 +50,19 @@ router.delete('/course/:courseId/student/:studentId', teacher.removeStudent)
 router.post('/course/:courseId/student/:studentId/restore', teacher.restoreStudent)
 // 获取学生学习进度
 router.get('/course/:courseId/student/:studentId/progress', teacher.getStudentProgress)
+
+// ==================== 教师统计数据路由 ====================
+// 获取教师统计数据
+router.get('/stats', teacher.getTeacherStats)
+
+// ==================== 资料管理路由 ====================
+// 获取课程资料列表
+router.get('/course/:courseId/materials', teacher.getMaterials)
+// 上传资料
+router.post('/material', fileStorage.single('file'), teacher.uploadMaterial)
+// 更新资料信息
+router.put('/material/:materialId', teacher.updateMaterial)
+// 删除资料
+router.delete('/material/:materialId', teacher.deleteMaterial)
 
 module.exports = router

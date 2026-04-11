@@ -1,26 +1,176 @@
-<template>
-  <!-- 导航栏 -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <div class="logo">
-        <span>📚</span>
-        <span>智慧学堂</span>
-      </div>
-      <div class="nav-menu">
-        <a href="my-teaching.html">我的教学</a>
-        <a href="course-manage.html" class="active">课程管理</a>
-        <a href="exam-manage.html">考试管理</a>
-        <a href="student-manage.html">学生管理</a>
-      </div>
-      <div class="nav-right">
-        <div class="user-info">
-          <div class="avatar">王</div>
-          <span>王教授</span>
-        </div>
-      </div>
-    </div>
-  </nav>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getVideoDetail, updateVideo, deleteVideo } from '@/api/teacher'
+import { getChapters } from '@/api/teacher'
 
+const route = useRoute()
+const router = useRouter()
+const videoId = route.params.videoId || route.query.videoId
+
+// 视频信息
+const video = ref({
+  video_name: '',
+  description: '',
+  chapter_id: '',
+  video_no: 1,
+  course_id: '',
+  duration: 0,
+  file_size: 0,
+  status: 1,
+  allow_comment: true,
+  allow_download: false,
+  permission: 'public'
+})
+
+// 章节列表
+const chapters = ref([])
+
+// 标签
+const tags = ref([])
+const newTag = ref('')
+
+// 加载状态
+const loading = ref(false)
+const saving = ref(false)
+
+// 获取视频详情
+const fetchVideoDetail = async () => {
+  if (!videoId) {
+    alert('缺少视频ID')
+    router.back()
+    return
+  }
+
+  loading.value = true
+  try {
+    const res = await getVideoDetail(videoId)
+    if (res.data.status === 0) {
+      const data = res.data.data
+      video.value = { ...video.value, ...data }
+      // 获取章节列表
+      if (video.value.course_id) {
+        fetchChapters()
+      }
+    } else {
+      alert(res.data.message || '获取视频详情失败')
+    }
+  } catch (error) {
+    console.error('获取视频详情失败:', error)
+    alert('获取视频详情失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 获取章节列表
+const fetchChapters = async () => {
+  try {
+    const res = await getChapters(video.value.course_id)
+    if (res.data.status === 0) {
+      chapters.value = res.data.data || []
+    }
+  } catch (error) {
+    console.error('获取章节列表失败:', error)
+  }
+}
+
+// 添加标签
+const addTag = () => {
+  const tag = newTag.value.trim()
+  if (tag && !tags.value.includes(tag)) {
+    tags.value.push(tag)
+    newTag.value = ''
+  }
+}
+
+// 移除标签
+const removeTag = (index) => {
+  tags.value.splice(index, 1)
+}
+
+// 保存修改
+const saveChanges = async () => {
+  if (!video.value.video_name) {
+    alert('请输入视频标题')
+    return
+  }
+  if (!video.value.chapter_id) {
+    alert('请选择所属章节')
+    return
+  }
+
+  saving.value = true
+  try {
+    const res = await updateVideo(videoId, {
+      video_name: video.value.video_name,
+      description: video.value.description,
+      chapter_id: video.value.chapter_id,
+      video_no: video.value.video_no,
+      status: video.value.status,
+      allow_comment: video.value.allow_comment,
+      allow_download: video.value.allow_download,
+      permission: video.value.permission,
+      tags: tags.value
+    })
+
+    if (res.data.status === 0) {
+      alert('保存成功')
+      router.back()
+    } else {
+      alert(res.data.message || '保存失败')
+    }
+  } catch (error) {
+    console.error('保存失败:', error)
+    alert('保存失败，请稍后重试')
+  } finally {
+    saving.value = false
+  }
+}
+
+// 删除视频
+const handleDelete = async () => {
+  if (!confirm('确定要删除这个视频吗？此操作不可恢复。')) {
+    return
+  }
+
+  try {
+    const res = await deleteVideo(videoId)
+    if (res.data.status === 0) {
+      alert('删除成功')
+      router.back()
+    } else {
+      alert(res.data.message || '删除失败')
+    }
+  } catch (error) {
+    console.error('删除失败:', error)
+    alert('删除失败，请稍后重试')
+  }
+}
+
+// 格式化文件大小
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+// 格式化时长
+const formatDuration = (seconds) => {
+  if (!seconds) return '00:00'
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
+onMounted(() => {
+  fetchVideoDetail()
+})
+</script>
+
+<template>
   <!-- 主内容 -->
   <main class="main-container">
     <div class="page-header">
@@ -29,11 +179,17 @@
         <p class="page-subtitle">修改视频信息、更换封面、调整发布设置</p>
       </div>
       <div class="header-actions">
-        <button class="btn-secondary">← 返回视频管理</button>
+        <button class="btn-secondary" @click="router.back()">← 返回视频管理</button>
       </div>
     </div>
 
-    <div class="edit-container">
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>加载中...</p>
+    </div>
+
+    <div v-else class="edit-container">
       <!-- 左侧表单 -->
       <div class="form-card">
         <!-- 视频预览 -->
@@ -42,11 +198,11 @@
           <div class="video-preview">
             <div class="preview-player">🎬</div>
             <div class="preview-info">
-              <span class="preview-filename">1.1 Python简介与安装.mp4</span>
-              <span class="preview-filesize">156 MB · 15:30</span>
+              <span class="preview-filename">{{ video.video_name || '未命名视频' }}</span>
+              <span class="preview-filesize">{{ formatFileSize(video.file_size) }} · {{ formatDuration(video.duration) }}</span>
             </div>
           </div>
-          <button class="btn-secondary" style="width: 100%">🔄 重新上传视频</button>
+          <button class="btn-secondary" style="width: 100%" @click="alert('重新上传功能开发中')">🔄 重新上传视频</button>
         </div>
 
         <!-- 基本信息 -->
@@ -55,33 +211,30 @@
 
           <div class="form-group">
             <label class="form-label">视频标题 <span class="required">*</span></label>
-            <input type="text" class="form-input" value="1.1 Python简介与安装" />
+            <input type="text" class="form-input" v-model="video.video_name" placeholder="请输入视频标题" />
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">所属章节 <span class="required">*</span></label>
-              <select class="form-select">
-                <option value="ch1" selected>第1章：Python基础入门</option>
-                <option value="ch2">第2章：数据类型与运算符</option>
-                <option value="ch3">第3章：函数与模块</option>
+              <select class="form-select" v-model="video.chapter_id">
+                <option value="">请选择章节</option>
+                <option v-for="chapter in chapters" :key="chapter.chapter_id" :value="chapter.chapter_id">
+                  {{ chapter.chapter_name }}
+                </option>
               </select>
             </div>
             <div class="form-group">
               <label class="form-label">课时序号 <span class="required">*</span></label>
-              <select class="form-select">
-                <option value="1" selected>第1课时</option>
-                <option value="2">第2课时</option>
-                <option value="3">第3课时</option>
+              <select class="form-select" v-model="video.video_no">
+                <option v-for="n in 10" :key="n" :value="n">第{{ n }}课时</option>
               </select>
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">视频简介</label>
-            <textarea class="form-textarea">
-本节课介绍Python语言的发展历程、特点和应用领域，并详细讲解如何在Windows、Mac和Linux系统上安装Python开发环境。</textarea
-            >
+            <textarea class="form-textarea" v-model="video.description" placeholder="请输入视频简介..."></textarea>
           </div>
         </div>
 
@@ -91,7 +244,7 @@
           <div class="cover-upload">
             <div class="cover-preview">🎬</div>
             <div class="cover-options">
-              <button class="cover-btn">📤 上传自定义封面</button>
+              <button class="cover-btn" @click="alert('上传封面功能开发中')">📤 上传自定义封面</button>
               <p class="form-hint" style="margin-bottom: 12px">或使用系统推荐封面</p>
               <div class="cover-templates">
                 <div
@@ -123,11 +276,16 @@
         <div class="form-section">
           <h2 class="section-title">🏷️ 标签</h2>
           <div class="tag-input-container">
-            <span class="tag-item">Python<span class="tag-remove">✕</span></span>
-            <span class="tag-item">入门<span class="tag-remove">✕</span></span>
-            <span class="tag-item">环境搭建<span class="tag-remove">✕</span></span>
-            <span class="tag-item">基础<span class="tag-remove">✕</span></span>
-            <input type="text" class="tag-input" placeholder="输入标签按回车添加" />
+            <span v-for="(tag, index) in tags" :key="index" class="tag-item">
+              {{ tag }}<span class="tag-remove" @click="removeTag(index)">✕</span>
+            </span>
+            <input
+              type="text"
+              class="tag-input"
+              v-model="newTag"
+              placeholder="输入标签按回车添加"
+              @keyup.enter="addTag"
+            />
           </div>
           <p class="form-hint">添加标签有助于学生更容易找到该视频</p>
         </div>
@@ -142,7 +300,7 @@
               <span class="sub">学生可以在视频下方发表评论</span>
             </div>
             <label class="switch">
-              <input type="checkbox" checked />
+              <input type="checkbox" v-model="video.allow_comment" />
               <span class="slider"></span>
             </label>
           </div>
@@ -153,15 +311,15 @@
               <span class="sub">允许学生下载该视频</span>
             </div>
             <label class="switch">
-              <input type="checkbox" />
+              <input type="checkbox" v-model="video.allow_download" />
               <span class="slider"></span>
             </label>
           </div>
 
           <div class="form-group" style="margin-top: 20px">
             <label class="form-label">学习权限</label>
-            <select class="form-select">
-              <option value="public" selected>公开 - 所有学生可见</option>
+            <select class="form-select" v-model="video.permission">
+              <option value="public">公开 - 所有学生可见</option>
               <option value="enrolled">选课学生 - 仅选课学生可见</option>
               <option value="vip">VIP专享 - 付费学生可见</option>
             </select>
@@ -170,9 +328,11 @@
 
         <!-- 按钮组 -->
         <div class="form-actions">
-          <button class="btn-danger">🗑️ 删除视频</button>
-          <button class="btn-secondary">取消</button>
-          <button class="btn-primary">💾 保存修改</button>
+          <button class="btn-danger" @click="handleDelete">🗑️ 删除视频</button>
+          <button class="btn-secondary" @click="router.back()">取消</button>
+          <button class="btn-primary" @click="saveChanges" :disabled="saving">
+            {{ saving ? '保存中...' : '💾 保存修改' }}
+          </button>
         </div>
       </div>
 
@@ -182,7 +342,7 @@
           <h3 class="info-card-title">📊 视频统计</h3>
           <div class="info-item">
             <span class="info-label">播放次数</span>
-            <span class="info-value">1,234</span>
+            <span class="info-value">{{ video.view_count || 0 }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">完播率</span>
@@ -206,102 +366,46 @@
           <h3 class="info-card-title">📅 时间信息</h3>
           <div class="info-item">
             <span class="info-label">上传时间</span>
-            <span class="info-value">2024-03-15 14:30</span>
+            <span class="info-value">{{ video.created_at?.split(' ')[0] || '-' }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">发布时间</span>
-            <span class="info-value">2024-03-15 15:00</span>
+            <span class="info-value">{{ video.published_at?.split(' ')[0] || '-' }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">最后修改</span>
-            <span class="info-value">2024-03-20 10:15</span>
-          </div>
-        </div>
-
-        <div class="info-card">
-          <h3 class="info-card-title">📝 修改历史</h3>
-          <div class="history-list">
-            <div class="history-item">
-              <div class="history-action">修改了视频标题</div>
-              <div class="history-time">2024-03-20 10:15</div>
-            </div>
-            <div class="history-item">
-              <div class="history-action">更换了视频封面</div>
-              <div class="history-time">2024-03-18 16:30</div>
-            </div>
-            <div class="history-item">
-              <div class="history-action">添加了标签"基础"</div>
-              <div class="history-time">2024-03-16 09:20</div>
-            </div>
+            <span class="info-value">{{ video.updated_at?.split(' ')[0] || '-' }}</span>
           </div>
         </div>
       </div>
     </div>
   </main>
 </template>
+
 <style scoped>
-/* 顶部导航 */
-.navbar {
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-.nav-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 20px;
+/* 加载状态 */
+.loading-state {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-}
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 24px;
-  font-weight: bold;
-  color: #667eea;
-}
-.nav-menu {
-  display: flex;
-  gap: 32px;
-}
-.nav-menu a {
-  text-decoration: none;
-  color: #333;
-  font-size: 15px;
-  font-weight: 500;
-  transition: color 0.3s;
-}
-.nav-menu a:hover,
-.nav-menu a.active {
-  color: #667eea;
-}
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: bold;
+  padding: 100px 20px;
+  color: #666;
 }
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* 主内容 */
 .main-container {
   max-width: 1200px;
@@ -606,26 +710,6 @@ input:checked + .slider:before {
   color: #333;
   font-weight: 500;
 }
-/* 历史记录 */
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.history-item {
-  padding: 12px;
-  background: #f5f7fa;
-  border-radius: 8px;
-  font-size: 13px;
-}
-.history-action {
-  color: #333;
-  margin-bottom: 4px;
-}
-.history-time {
-  color: #999;
-  font-size: 12px;
-}
 /* 按钮组 */
 .form-actions {
   display: flex;
@@ -652,6 +736,7 @@ input:checked + .slider:before {
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
+  margin-right: auto;
 }
 .btn-primary {
   padding: 12px 32px;
@@ -661,5 +746,19 @@ input:checked + .slider:before {
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .edit-container {
+    grid-template-columns: 1fr;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

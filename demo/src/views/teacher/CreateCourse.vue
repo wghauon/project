@@ -56,15 +56,18 @@ const handleJoinTypeChange = (type) => {
   }
 }
 
-// 创建课程信息
-async function upload() {
-  // 表单验证
-  if (!course_name.value || !category_name.value || !course_type.value || 
+// 表单验证
+function validateForm() {
+  if (!course_name.value || !category_name.value || !course_type.value ||
       !difficulty.value || !description.value || !hours.value || !credit.value) {
     alert('请填写完整的课程信息')
-    return
+    return false
   }
-  
+  return true
+}
+
+// 构建表单数据
+function buildFormData() {
   const formdata = new FormData()
   if (imgInput.value.files[0]) {
     formdata.append('file', imgInput.value.files[0])
@@ -82,10 +85,29 @@ async function upload() {
   formdata.append('invite_code', invite_code.value)
   formdata.append('createPerson', useStore.username)
   formdata.append('status', status.value)
-  
+  return formdata
+}
+
+// 保存草稿
+async function saveAsDraft() {
+  if (!validateForm()) return
+  status.value = 0
   try {
-    await uploadService(formdata)
-    alert(status.value === 0 ? '草稿保存成功' : '课程创建成功')
+    await uploadService(buildFormData())
+    alert('草稿保存成功')
+    router.push('/teacher/my-teaching')
+  } catch (error) {
+    alert('操作失败：' + (error.message || '未知错误'))
+  }
+}
+
+// 创建课程
+async function createCourse() {
+  if (!validateForm()) return
+  status.value = 1
+  try {
+    await uploadService(buildFormData())
+    alert('课程创建成功')
     router.push('/teacher/my-teaching')
   } catch (error) {
     alert('操作失败：' + (error.message || '未知错误'))
@@ -246,31 +268,19 @@ async function upload() {
         <!-- 按钮 -->
         <div class="form-actions">
           <button
-            type="button"
-            class="btn-secondary"
-            @click="
-              () => {
-                status = 0
-                upload()
-                router.push('/teacher/my-teaching')
-              }
-            "
-          >
-            保存草稿
-          </button>
-          <button
-            type="button"
-            class="btn-primary"
-            @click="
-              () => {
-                status = 1
-                upload()
-                router.push('/teacher/my-teaching')
-              }
-            "
-          >
-            创建课程
-          </button>
+          type="button"
+          class="btn-secondary"
+          @click="saveAsDraft"
+        >
+          保存草稿
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          @click="createCourse"
+        >
+          创建课程
+        </button>
         </div>
       </form>
     </div>

@@ -1,34 +1,49 @@
+<script setup>
+defineProps({
+  chapter: {
+    type: Object,
+    required: true
+  }
+})
+
+defineEmits(['add-lesson', 'edit-chapter', 'delete-chapter', 'edit-lesson', 'delete-lesson'])
+
+const formatDuration = (seconds) => {
+  if (!seconds) return '⏱️ 00:00'
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `⏱️ ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+</script>
+
 <template>
   <div class="chapter-item">
     <div class="chapter-header">
-      <span class="chapter-title">第1章：Python基础入门</span>
+      <span class="chapter-title">第{{ chapter.chapter_order }}章：{{ chapter.title }}</span>
       <div class="chapter-actions">
-        <button class="btn-icon">➕ 添加课时</button>
-        <button class="btn-icon">✏️ 编辑</button>
-        <button class="btn-icon">🗑️ 删除</button>
+        <button class="btn-icon" @click="$emit('add-lesson', chapter.id)">➕ 添加课时</button>
+        <button class="btn-icon" @click="$emit('edit-chapter', chapter)">✏️ 编辑</button>
+        <button class="btn-icon" @click="$emit('delete-chapter', chapter.id)">🗑️ 删除</button>
       </div>
     </div>
     <div class="lesson-list">
-      <div class="lesson-item">
-        <div class="lesson-info">
-          <span class="lesson-type">视频</span>
-          <span class="lesson-name">1.1 Python简介与安装</span>
-        </div>
-        <span class="lesson-duration">⏱️ 15:30</span>
+      <div v-if="!chapter.videos || chapter.videos.length === 0" class="empty-lessons">
+        暂无课时
       </div>
-      <div class="lesson-item">
+      <div
+        v-for="video in chapter.videos"
+        :key="video.id"
+        class="lesson-item"
+      >
         <div class="lesson-info">
           <span class="lesson-type">视频</span>
-          <span class="lesson-name">1.2 第一个Python程序</span>
+          <span class="lesson-name">{{ chapter.chapter_order }}.{{ video.video_order }} {{ video.title }}</span>
         </div>
-        <span class="lesson-duration">⏱️ 20:15</span>
-      </div>
-      <div class="lesson-item">
-        <div class="lesson-info">
-          <span class="lesson-type">视频</span>
-          <span class="lesson-name">1.3 基础语法</span>
+        <div class="lesson-actions">
+          <span class="lesson-duration">{{ formatDuration(video.duration) }}</span>
+          <button class="btn-icon-small" @click="$emit('edit-lesson', video)">✏️</button>
+          <button class="btn-icon-small" @click="$emit('delete-lesson', video.id)">🗑️</button>
         </div>
-        <span class="lesson-duration">⏱️ 25:00</span>
       </div>
     </div>
   </div>
@@ -61,6 +76,32 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
+}
+.btn-icon:hover {
+  background: #e3f2fd;
+}
+.btn-icon-small {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 4px;
+}
+.btn-icon-small:hover {
+  background: #f0f0f0;
+}
+.empty-lessons {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+.lesson-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .lesson-list {
   padding: 12px 20px;

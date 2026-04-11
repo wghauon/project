@@ -39,6 +39,11 @@ export const addChapter = (data) => {
   return instance.post('/teacher/chapter', data)
 }
 
+// 获取章节详情
+export const getChapterDetail = (chapterId) => {
+  return instance.get(`/teacher/chapter/${chapterId}`)
+}
+
 // 更新章节
 export const updateChapter = (chapterId, data) => {
   return instance.put(`/teacher/chapter/${chapterId}`, data)
@@ -60,7 +65,7 @@ export const getVideos = (courseId) => {
 
 // 获取视频详情
 export const getVideoDetail = (videoId) => {
-  return instance.get('/teacher/video_url', {
+  return instance.get('/teacher/video_detail', {
     params: { video_id: videoId }
   })
 }
@@ -166,7 +171,38 @@ export const removeStudent = (courseId, studentId) => {
   return instance.delete(`/teacher/course/${courseId}/student/${studentId}`)
 }
 
+// 恢复学生
+export const restoreStudentAPI = (courseId, studentId) => {
+  return instance.post(`/teacher/course/${courseId}/student/${studentId}/restore`)
+}
+
 // 获取学生学习进度
 export const getStudentProgress = (courseId, studentId) => {
   return instance.get(`/teacher/course/${courseId}/student/${studentId}/progress`)
+}
+
+// ==================== 资料管理 ====================
+
+// 获取课程资料列表
+export const getMaterials = (courseId) => {
+  return instance.get(`/teacher/course/${courseId}/materials`)
+}
+
+// 上传资料
+export const uploadMaterial = (formData) => {
+  return instance.post('/teacher/material', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+// 更新资料信息
+export const updateMaterial = (materialId, data) => {
+  return instance.put(`/teacher/material/${materialId}`, data)
+}
+
+// 删除资料
+export const deleteMaterial = (materialId) => {
+  return instance.delete(`/teacher/material/${materialId}`)
 }

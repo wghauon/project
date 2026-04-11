@@ -1,11 +1,14 @@
 <script setup>
 import { videUpload } from '@/utils/videoUpload'
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { courseDetailSearch } from '@/api/course'
 import { getChapters } from '@/api/teacher'
+import { useTeacherStore } from '@/stores/teacher'
 
 const route = useRoute()
+const router = useRouter()
+const teacherStore = useTeacherStore()
 const file = ref(null)
 
 // 收集表单信息
@@ -24,6 +27,7 @@ const selectedFileName = ref('')
 // 上传状态
 const isUploading = ref(false)
 const uploadProgress = ref(0)
+const uploadStatus = ref('') // 上传状态文本
 
 // 处理文件选择
 const handleFileChange = (event) => {
@@ -35,16 +39,23 @@ const handleFileChange = (event) => {
 
 // 获取课程章节列表
 const fetchChapters = async () => {
-  const courseId = route.params.courseId || route.query.courseId
-  if (!courseId) return
-  
+  // 优先从teacherStore获取课程ID，其次从路由参数获取
+  const courseId = teacherStore.course_id || route.params.courseId || route.query.courseId
+  if (!courseId) {
+    console.warn('未选择课程，无法获取章节列表')
+    return
+  }
+
   course_id.value = courseId
-  
+
   try {
     // 调用API获取真实章节数据
     const res = await getChapters(courseId)
     if (res.data.status === 0) {
       chapters.value = res.data.data || []
+      console.log('获取章节列表成功:', chapters.value)
+    } else {
+      console.error('获取章节列表失败:', res.data.message)
     }
   } catch (error) {
     console.error('获取章节失败:', error)
@@ -65,22 +76,36 @@ const handleUpload = async () => {
     alert('请选择视频文件')
     return
   }
-  
+
   isUploading.value = true
   uploadProgress.value = 0
-  
+  uploadStatus.value = '准备上传...'
+
   try {
-    await videUpload(file.value.files[0], video_name.value, description.value, course_id.value, chapter_id.value)
+    // 进度回调函数
+    const onProgress = (percentage) => {
+      uploadProgress.value = percentage
+      uploadStatus.value = `上传中... ${percentage}%`
+    }
+
+    await videUpload(
+      file.value.files[0],
+      video_name.value,
+      description.value,
+      course_id.value,
+      chapter_id.value,
+      onProgress
+    )
+
+    uploadStatus.value = '上传完成！'
     alert('视频上传成功！')
-    // 清空表单
-    video_name.value = ''
-    description.value = ''
-    chapter_id.value = ''
-    selectedFileName.value = ''
-    file.value.value = ''
+
+    // 跳转到视频管理页面
+    router.push(`/teacher/course-manage/${course_id.value}/video-manage`)
   } catch (error) {
     console.error('上传失败:', error)
-    alert('上传失败，请稍后重试')
+    uploadStatus.value = '上传失败'
+    alert('上传失败：' + (error.message || '请稍后重试'))
   } finally {
     isUploading.value = false
   }
@@ -134,31 +159,38 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 上传进度（示例） -->
-    <!-- <div class="upload-progress active">
+    <!-- 上传进度 -->
+    <div v-if="isUploading" class="upload-progress active">
       <div class="progress-header">
-        <h3 class="progress-title">正在上传</h3>
-        <span class="progress-status">65%</span>
+        <h3 class="progress-title">{{ uploadStatus }}</h3>
+        <span class="progress-status">{{ uploadProgress }}%</span>
       </div>
       <div class="progress-file">
         <div class="file-icon">🎬</div>
         <div class="file-info">
-          <div class="file-name">4.1 面向对象编程概述.mp4</div>
-          <div class="file-size">256 MB</div>
+          <div class="file-name">{{ selectedFileName || '正在上传...' }}</div>
+          <div class="file-size">{{ video_name }}</div>
         </div>
-        <button class="file-cancel">取消上传</button>
       </div>
       <div class="progress-bar-container">
-        <div class="progress-bar" style="width: 65%"></div>
+        <div class="progress-bar" :style="{ width: uploadProgress + '%' }"></div>
       </div>
-      <div class="progress-text">
-        <span>已上传 166 MB</span>
-        <span>预计剩余 30 秒</span>
+    </div>
+
+    <!-- 未选择课程警告 -->
+    <div v-if="!course_id" class="warning-card">
+      <div class="warning-content">
+        <span class="warning-icon">⚠️</span>
+        <div>
+          <h3>未选择课程</h3>
+          <p>请先前往"我的教学"选择一门课程，然后再上传视频</p>
+        </div>
       </div>
-    </div> -->
+      <button class="btn-primary" @click="$router.push('/teacher/my-teaching')">前往选择课程</button>
+    </div>
 
     <!-- 视频信息表单 -->
-    <div class="form-card">
+    <div v-else class="form-card">
       <div class="form-section">
         <h2 class="section-title">📋 视频基本信息</h2>
 
@@ -171,12 +203,15 @@ onMounted(() => {
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">所属章节 <span class="required">*</span></label>
-            <select class="form-select" v-model="chapter_id">
-              <option value="">请选择章节</option>
+            <select class="form-select" v-model="chapter_id" :disabled="chapters.length === 0">
+              <option value="">{{ chapters.length === 0 ? '暂无章节，请先创建章节' : '请选择章节' }}</option>
               <option v-for="chapter in chapters" :key="chapter.chapter_id" :value="chapter.chapter_id">
                 {{ chapter.chapter_name }}
               </option>
             </select>
+            <p v-if="chapters.length === 0" class="form-hint" style="color: #f44336;">
+              当前课程暂无章节，请先前往"章节管理"创建章节
+            </p>
           </div>
           <div class="form-group">
             <label class="form-label">课时序号 <span class="required">*</span></label>
@@ -270,9 +305,8 @@ onMounted(() => {
       <!-- 按钮组 -->
       <div class="form-actions">
         <button class="btn-secondary" @click="$router.back()">取消</button>
-        <button class="btn-secondary">保存为草稿</button>
-        <button class="btn-primary" @click="handleUpload">
-          ✓ 确认上传
+        <button class="btn-primary" @click="handleUpload" :disabled="isUploading">
+          {{ isUploading ? '上传中...' : '✓ 确认上传' }}
         </button>
       </div>
     </div>
@@ -639,6 +673,34 @@ onMounted(() => {
 }
 .cover-template.selected {
   border-color: #667eea;
+}
+/* 警告卡片 */
+.warning-card {
+  background: #fff3e0;
+  border: 2px solid #ff9800;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.warning-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.warning-icon {
+  font-size: 48px;
+}
+.warning-content h3 {
+  font-size: 18px;
+  color: #e65100;
+  margin-bottom: 8px;
+}
+.warning-content p {
+  font-size: 14px;
+  color: #666;
 }
 /* 按钮组 */
 .form-actions {

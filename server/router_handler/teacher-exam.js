@@ -24,12 +24,29 @@ exports.getExamList = async (req, res) => {
 exports.createExam = async (req, res) => {
   try {
     const { course_id, title, description, duration, start_time, end_time, total_score, pass_score } = req.body
-    
+
+    // 参数校验和转换，将 undefined 转换为 null
+    const params = [
+      course_id ?? null,
+      title ?? null,
+      description ?? null,
+      duration ?? null,
+      start_time ?? null,
+      end_time ?? null,
+      total_score ?? null,
+      pass_score ?? null
+    ]
+
+    // 检查必填字段
+    if (!course_id || !title) {
+      return res.send({ status: 1, message: '课程ID和考试标题不能为空' })
+    }
+
     const [result] = await db.execute(`
       INSERT INTO exams (course_id, title, description, duration, start_time, end_time, total_score, pass_score, status, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())
-    `, [course_id, title, description, duration, start_time, end_time, total_score, pass_score])
-    
+    `, params)
+
     res.send({ status: 0, message: '创建成功', data: { exam_id: result.insertId } })
   } catch (err) {
     res.send({ status: 1, message: err.message })
@@ -41,13 +58,25 @@ exports.updateExam = async (req, res) => {
   try {
     const { examId } = req.params
     const { title, description, duration, start_time, end_time, total_score, pass_score } = req.body
-    
+
+    // 参数校验和转换，将 undefined 转换为 null
+    const params = [
+      title ?? null,
+      description ?? null,
+      duration ?? null,
+      start_time ?? null,
+      end_time ?? null,
+      total_score ?? null,
+      pass_score ?? null,
+      examId
+    ]
+
     await db.execute(`
-      UPDATE exams 
+      UPDATE exams
       SET title = ?, description = ?, duration = ?, start_time = ?, end_time = ?, total_score = ?, pass_score = ?
       WHERE exam_id = ?
-    `, [title, description, duration, start_time, end_time, total_score, pass_score, examId])
-    
+    `, params)
+
     res.send({ status: 0, message: '更新成功' })
   } catch (err) {
     res.send({ status: 1, message: err.message })
