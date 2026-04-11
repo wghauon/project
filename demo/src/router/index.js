@@ -63,6 +63,7 @@ const router = createRouter({
         { path: 'exam-manage', component: () => import('@/views/teacher/ExamManage.vue') },
         { path: 'student-manage', component: () => import('@/views/teacher/StudentManage.vue') },
         { path: 'create-course', component: () => import('@/views/teacher/CreateCourse.vue') },
+        { path: 'edit-course/:courseId', component: () => import('@/views/teacher/EditCourse.vue') },
         { path: 'chapter-add', component: () => import('@/views/teacher/ChapterAdd.vue') },
         { path: 'video-upload', component: () => import('@/views/teacher/VideoUpload.vue') },
         {

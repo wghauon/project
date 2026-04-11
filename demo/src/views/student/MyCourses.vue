@@ -33,6 +33,7 @@ const fetchCourses = async () => {
     const res = await getMyCourses()
     if (res.data.status === 0) {
       courses.value = res.data.data || []
+      console.log(courses.value)
     } else {
       console.error('获取课程列表失败:', res.data.message)
     }
@@ -91,12 +92,12 @@ onMounted(() => {
 
     <!-- 课程列表 -->
     <div v-else class="course-grid">
-      <div 
-        v-for="course in filteredCourses" 
-        :key="course.course_id" 
+      <div
+        v-for="course in filteredCourses"
+        :key="course.course_id"
         class="course-card"
       >
-        <div class="course-header" :style="{ background: course.cover_gradient }">
+        <div class="course-header" :style="{ backgroundImage: `url(${course.cover_image})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
           <span class="course-status">{{ getStatusText(course.status, course.progress) }}</span>
           <h3 class="course-name">{{ course.course_name }}</h3>
         </div>

@@ -32,7 +32,7 @@ function checkStatus(status) {
         >
           管理课程
         </button>
-        <button class="btn-edit">编辑</button>
+        <button class="btn-edit" @click="router.push(`/teacher/edit-course/${course.course_id}`)">编辑</button>
       </div>
     </div>
   </div>

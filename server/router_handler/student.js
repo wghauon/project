@@ -10,7 +10,7 @@ exports.getCourseList = async (req, res) => {
              (SELECT COUNT(*) FROM course_enrollments WHERE course_id = c.course_id AND status = 1) as student_count
       FROM courses c
       LEFT JOIN users u ON c.teacher_id = u.user_id
-      WHERE c.status = 2 AND c.is_public = 1
+      WHERE c.status = 2 AND c.join_type = 1
     `
     const params = []
     

@@ -11,6 +11,8 @@ router.get('/course_list',teacher.courseListSearch)
 router.get('/courses', teacher.getTeacherCourses)
 // 课程详细查询接口
 router.get('/course_detail',teacher.courseDetail)
+// 课程更新接口
+router.post('/course/update', imgStorage.single('file'), teacher.updateCourse)
 // 视频列表查询接口
 router.get('/video_list',teacher.videoList)
 // 视频URL请求接口

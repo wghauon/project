@@ -12,7 +12,7 @@ exports.course = async (req, res) => {
     // 检查图片是否上传
     if (!req.file) { return res.send({ message: '未选择图片'})}
     // 检查表单必要项是否填写
-    const { course_name, category_name, course_type, difficulty, description, hours, credit, createPerson, status} = req.body
+    const { course_name, category_name, course_type, difficulty, description, hours, credit, createPerson, status, join_type, invite_code} = req.body
     if (!course_name || !category_name || !course_type || !difficulty || !description || !hours || !credit) {return res.send({ message: '课程信息填写不完全'})}
     // 获取协议,主机名和端口
     const protocol = req.protocol
@@ -39,7 +39,7 @@ exports.course = async (req, res) => {
       return res.send({ message: '没有查询到教师ID,创建课程失败'})
     }
     // 课程表
-    const [result] = await db.execute('insert into courses (course_name, teacher_id, category_id, description, cover_image, difficulty, credit, hours, status) values (?, ?, ?, ?, ?, ?, ?, ?, ?)',[course_name, teacher_id, category_id, description, cover_image, difficulty, credit, hours, status])
+    const [result] = await db.execute('insert into courses (course_name, teacher_id, category_id, description, cover_image, difficulty, credit, hours, status, join_type, invite_code) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',[course_name, teacher_id, category_id, description, cover_image, difficulty, credit, hours, status, join_type || 1, invite_code || ''])
     if (result.affectedRows !== 1) { return res.send({ message: '课程信息录入失败'}) }
     res.send({ message: '课程信息录入成功' })
   }
@@ -89,6 +89,64 @@ exports.courseDetail = async (req, res) => {
   }
   catch (err) {
     res.send({ message: err.message })
+  }
+}
+
+// 课程更新接口
+exports.updateCourse = async (req, res) => {
+  try {
+    const { course_id, course_name, category_name, course_type, difficulty, description, hours, credit, start_time, end_time, join_type, invite_code, status, cover_image } = req.body
+    
+    if (!course_id) {
+      return res.send({ status: 1, message: '缺少课程ID' })
+    }
+    
+    // 查询课程分类ID
+    let category_id = null
+    const [category] = await db.execute('select * from course_categories where category_name = ?',[category_name])
+    if (category.length > 0) {
+      category_id = category[0].category_id
+    } else {
+      const [result] = await db.execute('insert into course_categories (category_name) values (?)',[category_name])
+      category_id = result.insertId
+    }
+    
+    // 处理封面图片
+    let new_cover_image = cover_image
+    if (req.file) {
+      const protocol = req.protocol
+      const host = req.get('host')
+      new_cover_image = `${protocol}://${host}/uploads/img/${req.file.filename}`
+    }
+    
+    // 更新课程表
+    const [result] = await db.execute(
+      `update courses set 
+        course_name = ?, 
+        category_id = ?, 
+        description = ?, 
+        cover_image = ?, 
+        difficulty = ?, 
+        credit = ?, 
+        hours = ?, 
+        status = ?,
+        join_type = ?,
+        invite_code = ?,
+        start_time = ?,
+        end_time = ?,
+        updated_at = NOW()
+      where course_id = ?`,
+      [course_name, category_id, description, new_cover_image, difficulty, credit, hours, status || 0, join_type || 1, invite_code || '', start_time || null, end_time || null, course_id]
+    )
+    
+    if (result.affectedRows !== 1) { 
+      return res.send({ status: 1, message: '课程信息更新失败' }) 
+    }
+    
+    res.send({ status: 0, message: '课程信息更新成功' })
+  }
+  catch (err) {
+    res.send({ status: 1, message: err.message })
   }
 }
 // 视频列表查询接口

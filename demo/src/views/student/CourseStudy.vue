@@ -24,6 +24,9 @@ const course = ref({
 // 章节列表
 const chapters = ref([])
 
+// 所有视频列表（平铺展示）
+const allVideos = ref([])
+
 // 当前播放的视频
 const currentVideo = ref({
   video_id: null,
@@ -75,6 +78,11 @@ const fetchVideos = async () => {
       chapters.value.forEach(chapter => {
         chapter.videos = videos.filter(v => v.chapter_id === chapter.chapter_id)
       })
+      // 平铺所有视频用于右侧列表展示
+      allVideos.value = videos.map((video, index) => ({
+        ...video,
+        lesson_no: index + 1 // 添加课时序号
+      }))
       // 设置第一个视频为当前视频
       if (videos.length > 0 && !currentVideo.value.video_id) {
         currentVideo.value = videos[0]
@@ -133,7 +141,7 @@ const submitComment = async () => {
     alert('请输入评论内容')
     return
   }
-  
+
   try {
     const res = await addComment({
       video_id: currentVideo.value.video_id,
@@ -179,6 +187,32 @@ const goBack = () => {
   router.push('/student/my-courses')
 }
 
+// 视频播放结束处理
+const handleVideoEnded = async () => {
+  // 标记当前视频为已完成
+  try {
+    await updateVideoProgress({
+      video_id: currentVideo.value.video_id,
+      current_time: 0,
+      duration: 0,
+      is_completed: true
+    })
+    // 更新本地状态
+    const video = allVideos.value.find(v => v.video_id === currentVideo.value.video_id)
+    if (video) {
+      video.is_completed = true
+    }
+    // 自动播放下一个视频
+    const currentIndex = allVideos.value.findIndex(v => v.video_id === currentVideo.value.video_id)
+    if (currentIndex < allVideos.value.length - 1) {
+      const nextVideo = allVideos.value[currentIndex + 1]
+      switchVideo(nextVideo)
+    }
+  } catch (error) {
+    console.error('更新进度失败:', error)
+  }
+}
+
 onMounted(async () => {
   loading.value = true
   await fetchCourseDetail()
@@ -204,7 +238,14 @@ onMounted(async () => {
       <div class="video-section">
         <!-- 视频播放器 -->
         <div class="video-player">
-          <div class="video-placeholder">
+          <video
+            v-if="currentVideo.video_url"
+            :src="currentVideo.video_url"
+            controls
+            class="video-element"
+            @ended="handleVideoEnded"
+          ></video>
+          <div v-else class="video-placeholder">
             <div class="play-icon">▶</div>
             <p>{{ currentVideo.video_name }}</p>
           </div>
@@ -224,11 +265,11 @@ onMounted(async () => {
         <!-- 评论区 -->
         <div class="comments-section">
           <h3>💬 课程讨论 ({{ comments.length }})</h3>
-          
+
           <!-- 发表评论 -->
           <div class="comment-input">
-            <textarea 
-              v-model="newComment" 
+            <textarea
+              v-model="newComment"
               placeholder="发表你的评论..."
               rows="3"
             ></textarea>
@@ -259,30 +300,26 @@ onMounted(async () => {
 
       <!-- 右侧章节列表 -->
       <div class="sidebar">
-        <!-- 章节列表 -->
+        <!-- 课时列表 -->
         <div class="chapters-section">
-          <h3>📚 课程目录</h3>
-          <div class="chapters-list">
-            <div v-for="chapter in chapters" :key="chapter.chapter_id" class="chapter-item">
-              <div class="chapter-title">{{ chapter.chapter_name }}</div>
-              <div class="videos-list">
-                <div 
-                  v-for="video in chapter.videos" 
-                  :key="video.video_id"
-                  class="video-item"
-                  :class="{ 
-                    active: currentVideo.video_id === video.video_id,
-                    completed: video.is_completed 
-                  }"
-                  @click="switchVideo(video)"
-                >
-                  <span class="video-status">
-                    {{ video.is_completed ? '✓' : (currentVideo.video_id === video.video_id ? '▶' : '○') }}
-                  </span>
-                  <span class="video-name">{{ video.video_name }}</span>
-                  <span class="video-duration">{{ video.duration }}</span>
-                </div>
-              </div>
+          <h3>📚 课程目录 ({{ allVideos.length }}个课时)</h3>
+          <div class="videos-list">
+            <div
+              v-for="video in allVideos"
+              :key="video.video_id"
+              class="video-item"
+              :class="{
+                active: currentVideo.video_id === video.video_id,
+                completed: video.is_completed
+              }"
+              @click="switchVideo(video)"
+            >
+              <span class="video-status">
+                {{ video.is_completed ? '✓' : (currentVideo.video_id === video.video_id ? '▶' : '○') }}
+              </span>
+              <span class="lesson-no">第{{ video.lesson_no }}讲</span>
+              <span class="video-name">{{ video.video_name }}</span>
+              <span class="video-duration">{{ video.duration }}</span>
             </div>
           </div>
         </div>
@@ -291,8 +328,8 @@ onMounted(async () => {
         <div class="materials-section">
           <h3>📎 学习资料</h3>
           <div class="materials-list">
-            <div 
-              v-for="material in materials" 
+            <div
+              v-for="material in materials"
               :key="material.material_id"
               class="material-item"
               @click="downloadMaterial(material)"
@@ -374,6 +411,11 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .video-placeholder {
   text-align: center;
@@ -594,6 +636,15 @@ onMounted(async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.lesson-no {
+  font-size: 12px;
+  color: #999;
+  margin-right: 4px;
+  min-width: 45px;
+}
+.video-item.active .lesson-no {
+  color: #667eea;
 }
 .video-duration {
   font-size: 12px;

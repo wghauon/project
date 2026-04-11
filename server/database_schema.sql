@@ -58,7 +58,6 @@ CREATE TABLE IF NOT EXISTS `courses` (
     `semester` varchar(20) DEFAULT NULL COMMENT '学期（如2024春）',
     `status` tinyint DEFAULT NULL COMMENT '状态：0草稿/1待审核/2已发布/3已驳回/4已下架',
     `review_remark` varchar(500) DEFAULT NULL COMMENT '审核备注',
-    `is_public` tinyint DEFAULT 1 COMMENT '是否公开：0否/1是',
     `join_type` tinyint DEFAULT 1 COMMENT '加入方式：1公开/2申请/3邀请码/4关闭',
     `invite_code` varchar(20) DEFAULT NULL COMMENT '邀请码',
     `start_time` datetime DEFAULT NULL COMMENT '开课时间',
