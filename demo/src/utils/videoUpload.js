@@ -3,6 +3,46 @@ import { cutFile } from '@/utils/cutFile'
 import { createFileHash } from '@/utils/fileHash'
 
 /**
+ * 获取视频文件的元信息（时长、分辨率等）
+ * @param {File} file - 视频文件
+ * @returns {Promise<{duration: number, width: number, height: number}>}
+ */
+function getVideoMetadata(file) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video')
+    const url = URL.createObjectURL(file)
+
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(url)
+      resolve({
+        duration: Math.round(video.duration),
+        width: video.videoWidth,
+        height: video.videoHeight
+      })
+    }
+
+    video.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('无法获取视频元信息'))
+    }
+
+    video.src = url
+    video.load()
+  })
+}
+
+/**
+ * 获取文件格式（扩展名）
+ * @param {File} file - 视频文件
+ * @returns {string} 格式如 MP4, AVI 等
+ */
+function getFileFormat(file) {
+  const name = file.name || ''
+  const ext = name.split('.').pop().toUpperCase()
+  return ext || 'MP4'
+}
+
+/**
  * 上传视频文件
  * @param {File} file - 视频文件
  * @param {string} video_name - 视频名称
@@ -24,6 +64,15 @@ export async function videUpload(file, video_name, description, course_id, chapt
 
   console.log('开始上传视频:', { fileName: file.name, fileSize: file.size, video_name, course_id, chapter_id })
 
+  // 获取视频元信息
+  let videoMetadata = { duration: 0, width: 0, height: 0 }
+  try {
+    videoMetadata = await getVideoMetadata(file)
+    console.log('视频元信息:', videoMetadata)
+  } catch (e) {
+    console.warn('获取视频元信息失败:', e.message)
+  }
+
   const fileHash = await createFileHash(file) // 整体文件hash
   console.log('文件哈希:', fileHash)
 
@@ -33,9 +82,27 @@ export async function videUpload(file, video_name, description, course_id, chapt
   // 分片上传
   await chunkUpload(chunks, fileHash, onProgress)
 
+  // 准备视频信息
+  const file_size = file.size
+  const format = getFileFormat(file)
+  const resolution = videoMetadata.width && videoMetadata.height
+    ? `${videoMetadata.width}x${videoMetadata.height}`
+    : null
+  const duration = videoMetadata.duration
+
   // 分片合并
   console.log('分片上传完成，开始合并...')
-  const res = await mergeService(fileHash, video_name, description, course_id, chapter_id)
+  const res = await mergeService(
+    fileHash,
+    video_name,
+    description,
+    course_id,
+    chapter_id,
+    duration,
+    file_size,
+    format,
+    resolution
+  )
   console.log('合并结果:', res.data)
 
   if (res.data.status !== 0) {

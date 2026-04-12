@@ -30,12 +30,16 @@ export const videoService = (formdata) => {
   return instance.post('/teacher/chunk', formdata)
 }
 // 合并分片
-export const mergeService = (fileHash, video_name, description, course_id, chapter_id) => {
+export const mergeService = (fileHash, video_name, description, course_id, chapter_id, duration, file_size, format, resolution) => {
   return instance.post('/teacher/chunkMerge', {
     fileHash,
     video_name,
     description,
     course_id,
     chapter_id,
+    duration,
+    file_size,
+    format,
+    resolution,
   })
 }

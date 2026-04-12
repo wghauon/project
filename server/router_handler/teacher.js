@@ -254,8 +254,8 @@ exports.chunk = async (req, res) => {
 }
 // 合并文件接口
 exports.chunkMerge = async (req, res) => {
-  const { fileHash, course_id, video_name, description, chapter_id } = req.body
-  console.log('合并请求参数:', { fileHash, course_id, video_name, description, chapter_id })
+  const { fileHash, course_id, video_name, description, chapter_id, duration, file_size, format, resolution } = req.body
+  console.log('合并请求参数:', { fileHash, course_id, video_name, description, chapter_id, duration, file_size, format, resolution })
 
   // 参数校验
   if (!fileHash) {
@@ -335,10 +335,10 @@ exports.chunkMerge = async (req, res) => {
       video_no = (existingVideos[0].count || 0) + 1
     }
 
-    // 视频表 - 设置默认状态为1(已发布)
+    // 视频表 - 设置默认状态为1(已发布)，包含视频元信息
     const [videos] = await db.execute(
-      'INSERT INTO videos (course_id, chapter_id, video_name, description, video_url, status, video_no, created_at) VALUES (?, ?, ?, ?, ?, 1, ?, NOW())',
-      [course_id, chapter_id || null, video_name, description || '', video_url, video_no]
+      'INSERT INTO videos (course_id, chapter_id, video_name, description, video_url, status, video_no, duration, file_size, format, resolution, created_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, NOW())',
+      [course_id, chapter_id || null, video_name, description || '', video_url, video_no, duration || null, file_size || null, format || null, resolution || null]
     )
     if (videos.affectedRows !== 1) {
       return res.send({ status: 1, message: '视频信息录入失败' })
