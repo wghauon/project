@@ -2,7 +2,7 @@
 import { useRoute, useRouter } from 'vue-router'
 import { onMounted, ref, computed } from 'vue'
 import { courseDetailSearch } from '@/api/course'
-import { getTeacherCourses, getChapters, addChapter as addChapterAPI, updateChapter as updateChapterAPI, deleteChapter as deleteChapterAPI, getVideos, deleteVideo as deleteVideoAPI } from '@/api/teacher'
+import { getTeacherCourses, getChapters, addChapter as addChapterAPI, updateChapter as updateChapterAPI, deleteChapter as deleteChapterAPI, getVideos, deleteVideo as deleteVideoAPI, getCourseStudents } from '@/api/teacher'
 import { useTeacherStore } from '@/stores/teacher'
 import CourseManageNavigator from '@/components/CourseManageNavigator.vue'
 
@@ -75,11 +75,25 @@ const fetchVideos = async () => {
   }
 }
 
+// 获取学生列表
+const fetchStudents = async () => {
+  try {
+    const res = await getCourseStudents(course_id.value)
+    if (res.data.status === 0) {
+      const students = res.data.data || []
+      stats.value.studentCount = students.length
+    }
+  } catch (error) {
+    console.error('获取学生列表失败:', error)
+  }
+}
+
 // 加载课程详情
 onMounted(async () => {
   await fetchCourseDetail()
   await fetchChapters()
   await fetchVideos()
+  await fetchStudents()
 })
 
 // 切换标签

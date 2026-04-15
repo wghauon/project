@@ -51,8 +51,13 @@ exports.course = async (req, res) => {
 exports.courseListSearch = async (req, res) => {
   try {
     const { user_id } = req.query
-    // 查询课程表
-    const [courses] = await db.execute('select * from courses where teacher_id = ?',[user_id])
+    // 查询课程表，同时统计学生数量
+    const [courses] = await db.execute(`
+      SELECT c.*, 
+        (SELECT COUNT(*) FROM course_enrollments WHERE course_id = c.course_id AND status = 1) as student_count
+      FROM courses c 
+      WHERE c.teacher_id = ?
+    `, [user_id])
     if (courses.length < 1) { return res.send({ status: 0, message: '未查询到课程信息', data: [] })}
     res.send({ status: 0, message: '课程信息查询成功', data: courses})
   }

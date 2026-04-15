@@ -21,9 +21,9 @@ function checkStatus(status) {
     </div>
     <div class="course-body">
       <div class="course-stats">
-        <span>👨‍🎓 86人</span>
+        <span>👨‍🎓 {{ course.student_count || 0 }}人</span>
         <span>📹 {{ course.hours }}课时</span>
-        <span>📝 12作业</span>
+        <span>📝 {{ course.homework_count || 0 }}作业</span>
       </div>
       <div class="course-actions">
         <button
