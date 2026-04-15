@@ -82,8 +82,8 @@ router.beforeEach((to, from) => {
 
   // 需要登录的页面
   if (to.meta.requiresAuth) {
-    // 未登录，跳转到登录页
-    if (!userStore.token) {
+    // 未登录（没有accessToken），跳转到登录页
+    if (!userStore.accessToken) {
       return { path: '/' }
     }
 
@@ -102,7 +102,7 @@ router.beforeEach((to, from) => {
   }
 
   // 已登录用户访问登录页，跳转到对应首页
-  if (to.path === '/' && userStore.token) {
+  if (to.path === '/' && userStore.accessToken) {
     if (userStore.role == 1) {
       return { path: '/student' }
     } else if (userStore.role == 2) {

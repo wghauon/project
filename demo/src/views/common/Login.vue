@@ -15,14 +15,15 @@ function selectRole(r) {
 // 登录函数
 async function login(username, password, role) {
   const res = await loginService(username, password, role)
-  // 存储token
-  useStore.setToken(res.data.token)
-  // 存储身份
-  useStore.setRole(res.data.role)
-  // 存储用户ID
-  useStore.setUserID(res.data.user_id)
-  // 存储用户名
-  useStore.setUsername(username)
+  // 使用setLoginInfo统一存储登录信息（包含双token）
+  useStore.setLoginInfo({
+    accessToken: res.data.accessToken,
+    refreshToken: res.data.refreshToken,
+    role: res.data.role,
+    user_id: res.data.user_id,
+    username: res.data.username,
+    real_name: res.data.real_name
+  })
   // 根据角色跳转
   if (role === 1) {
     router.push('/student')

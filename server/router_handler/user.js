@@ -53,12 +53,27 @@ exports.login = async (req,res) => {
     if (rows[0].password !== password) { return res.send({ message: '密码错误'}) }
     // 确认身份是否匹配
     if (user_role !== role) { return res.send({ message:'身份不匹配'})}
-    // 登录成功,返回登录token字符串
+    // 登录成功,生成双token
     const user = { username, user_id, role: user_role }
-    const tokenStr = jwt.sign(user, config.jwtSecretKey, {expiresIn: config.expiresIn})
+    
+    // 生成access token（15分钟有效期）
+    const accessToken = jwt.sign(user, config.jwtSecretKey, {expiresIn: config.accessTokenExpiresIn})
+    
+    // 生成refresh token（7天有效期）
+    const refreshToken = jwt.sign({ user_id }, config.refreshTokenSecretKey, {expiresIn: config.refreshTokenExpiresIn})
+    
+    // 将refresh token存入数据库
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7天后过期
+    await db.execute(
+      'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE token = ?, expires_at = ?',
+      [user_id, refreshToken, expiresAt, refreshToken, expiresAt]
+    )
+    
     res.send({ 
+      status: 0,
       message: '登录成功', 
-      token: 'Bearer ' + tokenStr, 
+      accessToken: 'Bearer ' + accessToken,
+      refreshToken: refreshToken,
       user_id,
       role: user_role,
       real_name,
@@ -67,6 +82,70 @@ exports.login = async (req,res) => {
   }
   catch (err) {
     res.send({ message: err.message})
+  }
+}
+
+// 刷新token
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body
+    
+    if (!refreshToken) {
+      return res.status(401).send({ status: 1, message: '缺少refresh token' })
+    }
+    
+    // 验证refresh token
+    let decoded
+    try {
+      decoded = jwt.verify(refreshToken, config.refreshTokenSecretKey)
+    } catch (err) {
+      return res.status(401).send({ status: 1, message: 'refresh token无效或已过期' })
+    }
+    
+    // 检查数据库中是否存在
+    const [rows] = await db.execute(
+      'SELECT * FROM refresh_tokens WHERE user_id = ? AND token = ? AND expires_at > NOW()',
+      [decoded.user_id, refreshToken]
+    )
+    
+    if (rows.length === 0) {
+      return res.status(401).send({ status: 1, message: 'refresh token已失效' })
+    }
+    
+    // 查询用户信息
+    const [userRows] = await db.execute('SELECT * FROM users WHERE user_id = ?', [decoded.user_id])
+    if (userRows.length === 0) {
+      return res.status(401).send({ status: 1, message: '用户不存在' })
+    }
+    
+    const user = userRows[0]
+    const userInfo = { 
+      username: user.username, 
+      user_id: user.user_id, 
+      role: user.role 
+    }
+    
+    // 生成新的access token
+    const newAccessToken = jwt.sign(userInfo, config.jwtSecretKey, {expiresIn: config.accessTokenExpiresIn})
+    
+    // 生成新的refresh token（轮换机制）
+    const newRefreshToken = jwt.sign({ user_id: user.user_id }, config.refreshTokenSecretKey, {expiresIn: config.refreshTokenExpiresIn})
+    
+    // 更新数据库中的refresh token
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    await db.execute(
+      'UPDATE refresh_tokens SET token = ?, expires_at = ? WHERE user_id = ?',
+      [newRefreshToken, expiresAt, user.user_id]
+    )
+    
+    res.send({
+      status: 0,
+      message: '刷新成功',
+      accessToken: 'Bearer ' + newAccessToken,
+      refreshToken: newRefreshToken
+    })
+  } catch (err) {
+    res.status(500).send({ status: 1, message: err.message })
   }
 }
 
