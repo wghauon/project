@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getCourseDetail, getChapters, getVideos, getComments, addComment, likeVideo, getMaterials, updateVideoProgress, getCourseProgress } from '@/api/student'
+import VirtualList from '@/components/VirtualList.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -38,6 +39,9 @@ const currentVideo = ref({
 
 // 视频播放器引用
 const videoPlayer = ref(null)
+
+// 评论列表虚拟列表引用
+const commentsListRef = ref(null)
 
 // 评论列表
 const comments = ref([])
@@ -343,25 +347,34 @@ onMounted(async () => {
             <button class="btn-submit" @click="submitComment">发表评论</button>
           </div>
 
-          <!-- 评论列表 -->
-          <div class="comments-list">
-            <div v-for="comment in comments" :key="comment.comment_id" class="comment-item">
-              <div class="comment-avatar">{{ comment.avatar }}</div>
-              <div class="comment-content">
-                <div class="comment-header">
-                  <span class="comment-author">{{ comment.user_name }}</span>
-                  <span class="comment-time">{{ comment.created_at }}</span>
-                </div>
-                <p class="comment-text">{{ comment.content }}</p>
-                <div class="comment-actions">
-                  <button class="btn-like-comment" @click="likeComment(comment)">
-                    👍 {{ comment.likes }}
-                  </button>
-                  <button class="btn-reply">回复</button>
+          <!-- 评论列表 - 使用虚拟列表 -->
+          <VirtualList
+            ref="commentsListRef"
+            :items="comments"
+            :item-height="100"
+            :buffer-size="3"
+            :container-height="400"
+            class="comments-virtual-list"
+          >
+            <template #default="{ item: comment }">
+              <div class="comment-item">
+                <div class="comment-avatar">{{ comment.avatar }}</div>
+                <div class="comment-content">
+                  <div class="comment-header">
+                    <span class="comment-author">{{ comment.user_name }}</span>
+                    <span class="comment-time">{{ comment.created_at }}</span>
+                  </div>
+                  <p class="comment-text">{{ comment.content }}</p>
+                  <div class="comment-actions">
+                    <button class="btn-like-comment" @click="likeComment(comment)">
+                      👍 {{ comment.likes }}
+                    </button>
+                    <button class="btn-reply">回复</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </template>
+          </VirtualList>
         </div>
       </div>
 
@@ -600,6 +613,25 @@ onMounted(async () => {
   flex-direction: column;
   gap: 20px;
 }
+
+/* 虚拟列表评论区域样式 */
+.comments-virtual-list {
+  margin-top: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.comments-virtual-list :deep(.virtual-list-item) {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: white;
+}
+
+.comments-virtual-list :deep(.virtual-list-item:last-child) {
+  border-bottom: none;
+}
+
 .comment-item {
   display: flex;
   gap: 12px;

@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getDiscussionList, addDiscussion, replyDiscussion, likeDiscussion as likeDiscussionAPI } from '@/api/student'
+import VirtualList from '@/components/VirtualList.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -25,6 +26,9 @@ const newDiscussion = ref({
 // 回复
 const replyContent = ref('')
 const replyingTo = ref(null)
+
+// 讨论列表虚拟列表引用
+const discussionsListRef = ref(null)
 
 // 获取讨论列表
 const fetchDiscussions = async () => {
@@ -177,70 +181,78 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 讨论列表 -->
-    <div class="discussions-list">
-      <div 
-        v-for="discussion in filteredDiscussions" 
-        :key="discussion.discussion_id"
-        class="discussion-card"
-        :class="{ top: discussion.is_top }"
-      >
-        <div class="discussion-header">
-          <div class="author-info">
-            <span class="author-avatar">{{ discussion.avatar }}</span>
-            <div class="author-meta">
-              <span class="author-name">{{ discussion.author }}</span>
-              <span class="discussion-course">{{ discussion.course_name }}</span>
-            </div>
-          </div>
-          <span v-if="discussion.is_top" class="top-badge">置顶</span>
-          <span class="discussion-time">{{ discussion.created_at }}</span>
-        </div>
-
-        <h3 class="discussion-title">{{ discussion.title }}</h3>
-        <p class="discussion-content">{{ discussion.content }}</p>
-
-        <div class="discussion-actions">
-          <button class="btn-like" @click="handleLikeDiscussion(discussion)">
-            👍 {{ discussion.likes }}
-          </button>
-          <button class="btn-reply" @click="startReply(discussion)">
-            💬 {{ discussion.replies }} 回复
-          </button>
-        </div>
-
-        <!-- 回复列表 -->
-        <div v-if="discussion.replies_list && discussion.replies_list.length > 0" class="replies-section">
-          <div 
-            v-for="reply in discussion.replies_list" 
-            :key="reply.reply_id"
-            class="reply-item"
-          >
-            <span class="reply-avatar">{{ reply.avatar }}</span>
-            <div class="reply-content">
-              <div class="reply-header">
-                <span class="reply-author">{{ reply.author }}</span>
-                <span class="reply-time">{{ reply.created_at }}</span>
+    <!-- 讨论列表 - 使用虚拟列表 -->
+    <VirtualList
+      v-if="filteredDiscussions.length > 0"
+      ref="discussionsListRef"
+      :items="filteredDiscussions"
+      :item-height="200"
+      :buffer-size="2"
+      :container-height="600"
+      class="discussions-virtual-list"
+    >
+      <template #default="{ item: discussion }">
+        <div
+          class="discussion-card"
+          :class="{ top: discussion.is_top }"
+        >
+          <div class="discussion-header">
+            <div class="author-info">
+              <span class="author-avatar">{{ discussion.avatar }}</span>
+              <div class="author-meta">
+                <span class="author-name">{{ discussion.author }}</span>
+                <span class="discussion-course">{{ discussion.course_name }}</span>
               </div>
-              <p class="reply-text">{{ reply.content }}</p>
+            </div>
+            <span v-if="discussion.is_top" class="top-badge">置顶</span>
+            <span class="discussion-time">{{ discussion.created_at }}</span>
+          </div>
+
+          <h3 class="discussion-title">{{ discussion.title }}</h3>
+          <p class="discussion-content">{{ discussion.content }}</p>
+
+          <div class="discussion-actions">
+            <button class="btn-like" @click="handleLikeDiscussion(discussion)">
+              👍 {{ discussion.likes }}
+            </button>
+            <button class="btn-reply" @click="startReply(discussion)">
+              💬 {{ discussion.replies }} 回复
+            </button>
+          </div>
+
+          <!-- 回复列表 -->
+          <div v-if="discussion.replies_list && discussion.replies_list.length > 0" class="replies-section">
+            <div
+              v-for="reply in discussion.replies_list"
+              :key="reply.reply_id"
+              class="reply-item"
+            >
+              <span class="reply-avatar">{{ reply.avatar }}</span>
+              <div class="reply-content">
+                <div class="reply-header">
+                  <span class="reply-author">{{ reply.author }}</span>
+                  <span class="reply-time">{{ reply.created_at }}</span>
+                </div>
+                <p class="reply-text">{{ reply.content }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 回复输入框 -->
+          <div v-if="replyingTo === discussion" class="reply-input-section">
+            <textarea
+              v-model="replyContent"
+              placeholder="写下你的回复..."
+              rows="3"
+            ></textarea>
+            <div class="reply-actions">
+              <button class="btn-cancel" @click="cancelReply">取消</button>
+              <button class="btn-submit" @click="submitReply(discussion)">发送</button>
             </div>
           </div>
         </div>
-
-        <!-- 回复输入框 -->
-        <div v-if="replyingTo === discussion" class="reply-input-section">
-          <textarea 
-            v-model="replyContent" 
-            placeholder="写下你的回复..."
-            rows="3"
-          ></textarea>
-          <div class="reply-actions">
-            <button class="btn-cancel" @click="cancelReply">取消</button>
-            <button class="btn-submit" @click="submitReply(discussion)">发送</button>
-          </div>
-        </div>
-      </div>
-    </div>
+      </template>
+    </VirtualList>
 
     <!-- 空状态 -->
     <div v-if="filteredDiscussions.length === 0" class="empty-state">
@@ -376,6 +388,16 @@ onMounted(() => {
   flex-direction: column;
   gap: 16px;
 }
+
+/* 虚拟列表讨论区域样式 */
+.discussions-virtual-list {
+  margin-top: 16px;
+}
+
+.discussions-virtual-list :deep(.virtual-list-item) {
+  margin-bottom: 16px;
+}
+
 .discussion-card {
   background: white;
   border-radius: 12px;

@@ -575,7 +575,7 @@ const parseBatchImport = () => {
     const line = lines[i].trim()
     
     // 检测题目开始（以数字开头，如 "1." 或 "1、"）
-    const questionMatch = line.match(/^(\d+)[\.、\s]+(.+)$/)
+    const questionMatch = line.match(/^(\d+)[.、\s]+(.+)$/)
     if (questionMatch) {
       // 保存上一个题目
       if (currentQuestion && currentQuestion.question_text) {
@@ -594,7 +594,7 @@ const parseBatchImport = () => {
     if (!currentQuestion) continue
     
     // 检测选项（A. B. C. D. 或 A、B、C、D、）
-    const optionMatch = line.match(/^([A-H])[\.、\s]+(.+)$/)
+    const optionMatch = line.match(/^([A-H])[.、\s]+(.+)$/)
     if (optionMatch) {
       currentQuestion.options.push(optionMatch[2])
       continue
