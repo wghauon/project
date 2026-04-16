@@ -18,6 +18,8 @@ const studentRouter = require('./router/student')
 const teacherExamRouter = require('./router/teacher-exam')
 // 导入管理员路由模块
 const adminRouter = require('./router/admin')
+// 导入AI聊天路由模块
+const aiChatRouter = require('./router/ai-chat')
 
 // 更详细的CORS配置
 app.use(cors({
@@ -66,6 +68,8 @@ app.use('/student',studentRouter)
 app.use('/teacher-exam',teacherExamRouter)
 // 注册管理员路由模块
 app.use('/admin',adminRouter)
+// 注册AI聊天路由模块
+app.use('/ai',aiChatRouter)
 
 
 

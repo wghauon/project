@@ -26,6 +26,7 @@ const router = createRouter({
         { path: 'flowchart', component: () => import('@/views/student/Flowchart.vue') },
         { path: 'room-list', component: () => import('@/views/student/RoomList.vue') },
         { path: 'announcements', component: () => import('@/views/student/Announcements.vue') },
+        { path: 'ai-chat', component: () => import('@/views/student/AIChat.vue') },
       ],
     },
     // 管理员页面
