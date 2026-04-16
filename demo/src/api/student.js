@@ -139,3 +139,8 @@ export const markNotificationRead = (data) => {
 export const getMaterials = (courseId) => {
   return instance.get(`/student/course/${courseId}/materials`)
 }
+
+// 获取系统公告列表
+export const getAnnouncements = () => {
+  return instance.get('/student/announcements')
+}

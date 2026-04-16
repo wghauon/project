@@ -67,4 +67,8 @@ router.put('/material/:materialId', teacher.updateMaterial)
 // 删除资料
 router.delete('/material/:materialId', teacher.deleteMaterial)
 
+// ==================== 系统公告路由 ====================
+// 获取系统公告列表
+router.get('/announcements', teacher.getAnnouncements)
+
 module.exports = router

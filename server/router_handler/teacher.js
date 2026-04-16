@@ -934,3 +934,21 @@ exports.deleteMaterial = async (req, res) => {
     res.send({ status: 1, message: err.message })
   }
 }
+
+// ==================== 系统公告接口 ====================
+
+// 获取系统公告列表
+exports.getAnnouncements = async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT n.*, u.real_name as sender_name
+      FROM notifications n
+      LEFT JOIN users u ON n.sender_id = u.user_id
+      WHERE n.type = 1 AND n.status = 1
+      ORDER BY n.is_top DESC, n.created_at DESC
+    `)
+    res.send({ status: 0, message: '获取成功', data: rows })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}

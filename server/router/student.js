@@ -87,4 +87,7 @@ router.post('/notification/read', studentHandler.markNotificationRead)
 // 获取学习资料
 router.get('/course/:courseId/materials', studentHandler.getMaterials)
 
+// 获取系统公告列表
+router.get('/announcements', studentHandler.getAnnouncements)
+
 module.exports = router

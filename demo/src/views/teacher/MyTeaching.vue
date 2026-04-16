@@ -3,6 +3,7 @@ import CourseCard from '@/components/CourseCard.vue'
 import router from '@/router'
 import { useUserStore } from '@/stores/user'
 import { courseListSearch, getTeacherStats } from '@/api/course'
+import { getAnnouncements } from '@/api/teacher'
 import { ref, onMounted } from 'vue'
 
 const userStore = useUserStore()
@@ -14,6 +15,41 @@ const stats = ref({
   new_discussions: 0
 })
 
+// 公告列表
+const announcements = ref([])
+
+// 获取公告列表
+const fetchAnnouncements = async () => {
+  try {
+    const res = await getAnnouncements()
+    if (res.data.status === 0) {
+      announcements.value = res.data.data || []
+    }
+  } catch (error) {
+    console.error('获取公告失败:', error)
+  }
+}
+
+// 跳转到公告列表页
+const goToAnnouncements = () => {
+  router.push('/teacher/announcements')
+}
+
+// 获取类型文本
+const getTypeText = (type) => {
+  const map = {
+    'system': '系统',
+    'important': '重要',
+    'notice': '通知'
+  }
+  return map[type] || '其他'
+}
+
+// 获取类型样式类
+const getTypeClass = (type) => {
+  return type
+}
+
 onMounted(async () => {
   // 获取课程列表
   const res = await courseListSearch(userStore.user_id)
@@ -24,6 +60,9 @@ onMounted(async () => {
   if (statsRes.data.status === 0) {
     stats.value = statsRes.data.data
   }
+  
+  // 获取公告列表
+  await fetchAnnouncements()
 })
 </script>
 <template>
@@ -79,6 +118,38 @@ onMounted(async () => {
         <div class="stat-info">
           <h3>{{ stats.new_discussions }}</h3>
           <p>新讨论</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 公告区域 -->
+    <div class="announcements-section" v-if="announcements.length > 0">
+      <div class="section-header">
+        <h2 class="section-title">📢 系统公告</h2>
+        <button class="btn-toggle" @click="goToAnnouncements">
+          查看全部
+        </button>
+      </div>
+      <div class="announcement-list">
+        <div 
+          v-for="announcement in announcements.slice(0, 1)" 
+          :key="announcement.notification_id" 
+          class="announcement-card"
+        >
+          <div class="announcement-header">
+            <h3 class="announcement-title">
+              <span v-if="announcement.is_top" class="top-badge">置顶</span>
+              {{ announcement.title }}
+            </h3>
+            <span class="announcement-type" :class="getTypeClass(announcement.type)">
+              {{ getTypeText(announcement.type) }}
+            </span>
+          </div>
+          <p class="announcement-content">{{ announcement.content }}</p>
+          <div class="announcement-footer">
+            <span class="announcement-meta">📅 {{ announcement.created_at }}</span>
+            <span class="announcement-meta">👤 {{ announcement.sender_name || '管理员' }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -168,5 +239,94 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   gap: 24px;
+}
+
+/* 公告区域 */
+.announcements-section {
+  margin-bottom: 32px;
+}
+.announcements-section .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.btn-toggle {
+  padding: 8px 16px;
+  background: #f5f7fa;
+  color: #667eea;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.btn-toggle:hover {
+  background: #e0e0e0;
+}
+.announcement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.announcement-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #667eea;
+}
+.announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.announcement-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.top-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #ff5252;
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.announcement-type {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.announcement-type.system {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+.announcement-type.important {
+  background: #ffebee;
+  color: #f44336;
+}
+.announcement-type.notice {
+  background: #fff3e0;
+  color: #ff9800;
+}
+.announcement-content {
+  color: #666;
+  line-height: 1.7;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+.announcement-footer {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  color: #999;
 }
 </style>

@@ -32,6 +32,7 @@ const handleLogout = () => {
         >
         <router-link to="/teacher/exam-manage">考试管理</router-link>
         <router-link to="/teacher/student-manage">学生管理</router-link>
+        <router-link to="/teacher/announcements">公告查看</router-link>
       </div>
       <div class="nav-right">
         <div class="user-info">

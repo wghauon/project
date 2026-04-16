@@ -25,6 +25,7 @@ const router = createRouter({
         { path: 'notifications', component: () => import('@/views/student/Notifications.vue') },
         { path: 'flowchart', component: () => import('@/views/student/Flowchart.vue') },
         { path: 'room-list', component: () => import('@/views/student/RoomList.vue') },
+        { path: 'announcements', component: () => import('@/views/student/Announcements.vue') },
       ],
     },
     // 管理员页面
@@ -71,6 +72,7 @@ const router = createRouter({
           component: () => import('@/views/teacher/VideoPreview.vue'),
         },
         { path: 'video-edit/:videoId', component: () => import('@/views/teacher/VideoEdit.vue') },
+        { path: 'announcements', component: () => import('@/views/teacher/Announcements.vue') },
       ],
     },
   ],

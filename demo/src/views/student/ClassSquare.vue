@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getCourseList, joinCourse } from '@/api/student'
+import { getCourseList, joinCourse, getAnnouncements } from '@/api/student'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -10,6 +10,9 @@ const userStore = useUserStore()
 // 课程列表
 const courses = ref([])
 const loading = ref(false)
+
+// 公告列表
+const announcements = ref([])
 
 // 筛选条件
 const filters = ref({
@@ -41,6 +44,38 @@ const fetchCourses = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 获取公告列表
+const fetchAnnouncements = async () => {
+  try {
+    const res = await getAnnouncements()
+    if (res.data.status === 0) {
+      announcements.value = res.data.data || []
+    }
+  } catch (error) {
+    console.error('获取公告失败:', error)
+  }
+}
+
+// 获取类型文本
+const getTypeText = (type) => {
+  const map = {
+    'system': '系统',
+    'important': '重要',
+    'notice': '通知'
+  }
+  return map[type] || '其他'
+}
+
+// 获取类型样式类
+const getTypeClass = (type) => {
+  return type
+}
+
+// 跳转到公告列表页
+const goToAnnouncements = () => {
+  router.push('/student/announcements')
 }
 
 // 筛选课程
@@ -107,10 +142,45 @@ const getCoverGradient = (index) => {
 
 onMounted(() => {
   fetchCourses()
+  fetchAnnouncements()
 })
 </script>
 
 <template>
+  <!-- 公告区域 -->
+  <section class="announcement-section" v-if="announcements.length > 0">
+    <div class="announcement-container">
+      <div class="announcement-header-bar">
+        <h2 class="announcement-section-title">📢 系统公告</h2>
+        <button class="btn-toggle-announcement" @click="goToAnnouncements">
+          查看全部
+        </button>
+      </div>
+      <div class="announcement-list">
+        <div 
+          v-for="announcement in announcements.slice(0, 1)" 
+          :key="announcement.notification_id" 
+          class="announcement-card"
+        >
+          <div class="announcement-card-header">
+            <h3 class="announcement-card-title">
+              <span v-if="announcement.is_top" class="top-badge">置顶</span>
+              {{ announcement.title }}
+            </h3>
+            <span class="announcement-card-type" :class="getTypeClass(announcement.type)">
+              {{ getTypeText(announcement.type) }}
+            </span>
+          </div>
+          <p class="announcement-card-content">{{ announcement.content }}</p>
+          <div class="announcement-card-footer">
+            <span class="announcement-card-meta">📅 {{ announcement.created_at }}</span>
+            <span class="announcement-card-meta">👤 {{ announcement.sender_name || '管理员' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- 搜索筛选区 -->
   <section class="search-section">
     <div class="search-container">
@@ -228,6 +298,107 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* 公告区域 */
+.announcement-section {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  padding: 30px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.announcement-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.announcement-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.announcement-section-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+.btn-toggle-announcement {
+  padding: 8px 16px;
+  background: white;
+  color: #667eea;
+  border: 1px solid #667eea;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-toggle-announcement:hover {
+  background: #667eea;
+  color: white;
+}
+.announcement-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 16px;
+}
+.announcement-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #667eea;
+}
+.announcement-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.announcement-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.top-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #ff5252;
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.announcement-card-type {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.announcement-card-type.system {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+.announcement-card-type.important {
+  background: #ffebee;
+  color: #f44336;
+}
+.announcement-card-type.notice {
+  background: #fff3e0;
+  color: #ff9800;
+}
+.announcement-card-content {
+  color: #666;
+  line-height: 1.7;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+.announcement-card-footer {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  color: #999;
+}
+
 /* 搜索筛选区 */
 .search-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

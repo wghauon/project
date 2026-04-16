@@ -28,6 +28,7 @@ const handleLogout = () => {
         <router-link to="/student/my-courses">我的课程</router-link>
         <router-link to="/student/exams">考试中心</router-link>
         <router-link to="/student/room-list">在线课堂</router-link>
+        <router-link to="/student/announcements">公告查看</router-link>
       </div>
       <div class="nav-right">
         <SearchBox></SearchBox>

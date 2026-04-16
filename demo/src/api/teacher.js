@@ -206,3 +206,10 @@ export const updateMaterial = (materialId, data) => {
 export const deleteMaterial = (materialId) => {
   return instance.delete(`/teacher/material/${materialId}`)
 }
+
+// ==================== 系统公告 ====================
+
+// 获取系统公告列表
+export const getAnnouncements = () => {
+  return instance.get('/teacher/announcements')
+}
