@@ -9,13 +9,13 @@ export const chatWithAI = (data, onMessage, onError, onComplete) => {
     xhr.open('POST', 'http://127.0.0.1:3000/ai/chat', true)
     xhr.setRequestHeader('Content-Type', 'application/json')
     xhr.setRequestHeader('Authorization', localStorage.getItem('accessToken') || '')
-    
+
     let buffer = ''
-    
+
     xhr.onprogress = () => {
   const newData = xhr.responseText.substring(buffer.length)
       buffer = xhr.responseText
-      
+
       // 解析SSE数据
       const lines = newData.split('\n')
       for (const line of lines) {
@@ -35,16 +35,16 @@ export const chatWithAI = (data, onMessage, onError, onComplete) => {
         }
       }
     }
-    
+
     xhr.onerror = () => {
       onError && onError('网络请求失败')
       reject(new Error('网络请求失败'))
     }
-    
+
     xhr.onload = () => {
       resolve()
     }
-    
+
     xhr.send(JSON.stringify({ message, userId, conversationId }))
   })
 }
@@ -61,4 +61,14 @@ export const clearChatHistory = (userId, conversationId) => {
   return instance.delete(`/ai/chat/history/${userId}`, {
     params: { conversationId }
   })
+}
+
+// 获取用户的所有对话列表
+export const getConversationList = (userId) => {
+  return instance.get(`/ai/chat/conversations/${userId}`)
+}
+
+// 删除某个对话
+export const deleteConversation = (userId, conversationId) => {
+  return instance.delete(`/ai/chat/conversation/${userId}/${conversationId}`)
 }

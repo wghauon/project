@@ -96,7 +96,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close', 'update:conversationId'])
+const emit = defineEmits(['close', 'update:conversationId', 'conversationUpdated'])
 
 const userStore = useUserStore()
 const messages = ref([])
@@ -109,34 +109,34 @@ const currentConversationId = ref(props.conversationId)
 // 格式化消息内容（支持代码高亮和Markdown）
 const formatMessage = (content) => {
   if (!content) return ''
-  
+
   // 转义HTML
   let formatted = content
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-  
+
   // 代码块处理
   formatted = formatted.replace(
     /```(\w+)?\n([\s\S]*?)```/g,
     (match, lang, code) => `<pre class="code-block"><code class="language-${lang || 'text'}">${code.trim()}</code></pre>`
   )
-  
+
   // 行内代码
   formatted = formatted.replace(
     /`([^`]+)`/g,
     '<code class="inline-code">$1</code>'
   )
-  
+
   // 粗体
   formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-  
+
   // 斜体
   formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>')
-  
+
   // 换行
   formatted = formatted.replace(/\n/g, '<br>')
-  
+
   return formatted
 }
 
@@ -160,18 +160,18 @@ const scrollToBottom = () => {
 const sendMessage = async () => {
   const message = inputMessage.value.trim()
   if (!message || isLoading.value) return
-  
+
   // 添加用户消息
   messages.value.push({
     role: 'user',
     content: message,
     time: new Date().toISOString()
   })
-  
+
   inputMessage.value = ''
   isLoading.value = true
   scrollToBottom()
-  
+
   // 准备接收AI回复
   const aiMessageIndex = messages.value.length
   messages.value.push({
@@ -179,7 +179,7 @@ const sendMessage = async () => {
     content: '',
     time: new Date().toISOString()
   })
-  
+
   try {
     await chatWithAI(
       {
@@ -203,6 +203,8 @@ const sendMessage = async () => {
         if (data.conversationId && !currentConversationId.value) {
           currentConversationId.value = data.conversationId
           emit('update:conversationId', data.conversationId)
+          // 通知父组件刷新对话列表
+          emit('conversationUpdated')
         }
         scrollToBottom()
       }
@@ -217,7 +219,7 @@ const sendMessage = async () => {
 // 清空历史记录
 const clearHistory = async () => {
   if (!confirm('确定要清空对话历史吗？')) return
-  
+
   try {
     await clearChatHistory(userStore.userInfo?.id, currentConversationId.value)
     messages.value = []
@@ -232,7 +234,7 @@ const clearHistory = async () => {
 // 加载历史记录
 const loadHistory = async () => {
   if (!userStore.userInfo?.id || !currentConversationId.value) return
-  
+
   try {
     const res = await getChatHistory(userStore.userInfo.id, currentConversationId.value)
     if (res.data.status === 0 && res.data.data) {

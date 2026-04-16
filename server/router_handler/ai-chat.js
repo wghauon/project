@@ -176,3 +176,64 @@ async function saveChatMessage(userId, conversationId, userMessage, aiResponse) 
     throw error
   }
 }
+
+// 获取用户的所有对话列表
+exports.getConversationList = async (req, res) => {
+  try {
+    const { userId } = req.params
+    
+    if (!userId) {
+      return res.status(400).json({ status: 1, message: '用户ID不能为空' })
+    }
+
+    const sql = `
+      SELECT 
+        conversation_id,
+        MAX(created_at) as last_time,
+        SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN role = 'user' THEN content END ORDER BY created_at DESC SEPARATOR '|'), '|', 1) as last_message
+      FROM ai_chat_history 
+      WHERE user_id = ?
+      GROUP BY conversation_id
+      ORDER BY last_time DESC
+    `
+    
+    const [rows] = await db.execute(sql, [userId])
+    
+    res.json({
+      status: 0,
+      message: '获取成功',
+      data: rows.map(row => ({
+        conversationId: row.conversation_id,
+        lastTime: row.last_time,
+        lastMessage: row.last_message ? row.last_message.substring(0, 50) + (row.last_message.length > 50 ? '...' : '') : '新对话'
+      }))
+    })
+  } catch (error) {
+    console.error('获取对话列表失败:', error)
+    res.status(500).json({ status: 1, message: '获取对话列表失败', error: error.message })
+  }
+}
+
+// 删除某个对话
+exports.deleteConversation = async (req, res) => {
+  try {
+    const { userId, conversationId } = req.params
+    
+    if (!userId || !conversationId) {
+      return res.status(400).json({ status: 1, message: '用户ID和对话ID不能为空' })
+    }
+
+    await db.execute(
+      'DELETE FROM ai_chat_history WHERE user_id = ? AND conversation_id = ?',
+      [userId, conversationId]
+    )
+    
+    res.json({
+      status: 0,
+      message: '删除成功'
+    })
+  } catch (error) {
+    console.error('删除对话失败:', error)
+    res.status(500).json({ status: 1, message: '删除对话失败', error: error.message })
+  }
+}
