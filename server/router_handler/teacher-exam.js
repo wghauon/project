@@ -1,9 +1,49 @@
 // 教师端考试管理路由处理函数
 const db = require('../db/index')
 
+// 更新考试状态（自动根据时间更新状态）
+const updateExamStatus = async () => {
+  try {
+    const now = new Date()
+    
+    // 将草稿(status=0)且到达开始时间的考试更新为进行中(status=2)
+    await db.execute(`
+      UPDATE exams 
+      SET status = 2 
+      WHERE status = 1 
+      AND start_time IS NOT NULL 
+      AND start_time <= ?
+      AND (end_time IS NULL OR end_time > ?)
+    `, [now, now])
+    
+    // 将进行中(status=2)且超过结束时间的考试更新为已结束(status=3)
+    await db.execute(`
+      UPDATE exams 
+      SET status = 3 
+      WHERE status = 2 
+      AND end_time IS NOT NULL 
+      AND end_time <= ?
+    `, [now])
+    
+    // 将已发布(status=1)且超过结束时间的考试更新为已结束(status=3)
+    await db.execute(`
+      UPDATE exams 
+      SET status = 3 
+      WHERE status = 1 
+      AND end_time IS NOT NULL 
+      AND end_time <= ?
+    `, [now])
+  } catch (err) {
+    console.error('更新考试状态失败:', err)
+  }
+}
+
 // 获取考试列表
 exports.getExamList = async (req, res) => {
   try {
+    // 先自动更新考试状态
+    await updateExamStatus()
+    
     const teacherId = req.auth.user_id
     const [rows] = await db.execute(`
       SELECT e.*, c.course_name,
@@ -14,6 +54,18 @@ exports.getExamList = async (req, res) => {
       WHERE c.teacher_id = ?
       ORDER BY e.created_at DESC
     `, [teacherId])
+    
+    // 转换状态为前端使用的字符串
+    rows.forEach(row => {
+      switch(row.status) {
+        case 0: row.status = 'draft'; break
+        case 1: row.status = 'published'; break
+        case 2: row.status = 'ongoing'; break
+        case 3: row.status = 'finished'; break
+        default: row.status = 'draft'
+      }
+    })
+    
     res.send({ status: 0, message: '获取成功', data: rows })
   } catch (err) {
     res.send({ status: 1, message: err.message })
@@ -114,7 +166,31 @@ exports.publishExam = async (req, res) => {
       return res.send({ status: 1, message: '请先添加题目' })
     }
     
-    await db.execute('UPDATE exams SET status = 1 WHERE exam_id = ?', [examId])
+    // 检查是否已设置开始时间
+    const [exam] = await db.execute(
+      'SELECT start_time, end_time FROM exams WHERE exam_id = ?',
+      [examId]
+    )
+    
+    if (!exam[0].start_time) {
+      return res.send({ status: 1, message: '请先设置考试开始时间' })
+    }
+    
+    const now = new Date()
+    const startTime = new Date(exam[0].start_time)
+    const endTime = exam[0].end_time ? new Date(exam[0].end_time) : null
+    
+    // 根据当前时间和考试时间判断状态
+    let status = 1 // 默认已发布
+    if (startTime <= now) {
+      if (endTime && endTime <= now) {
+        status = 3 // 已结束
+      } else {
+        status = 2 // 进行中
+      }
+    }
+    
+    await db.execute('UPDATE exams SET status = ? WHERE exam_id = ?', [status, examId])
     res.send({ status: 0, message: '发布成功' })
   } catch (err) {
     res.send({ status: 1, message: err.message })
