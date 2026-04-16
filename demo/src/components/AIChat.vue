@@ -91,7 +91,7 @@ import { useUserStore } from '@/stores/user'
 
 const props = defineProps({
   conversationId: {
-    type: String,
+    type: [String, null],
     default: null
   }
 })
@@ -184,7 +184,7 @@ const sendMessage = async () => {
     await chatWithAI(
       {
         message,
-        userId: userStore.userInfo?.id,
+        userId: userStore.user_id,
         conversationId: currentConversationId.value
       },
       // 收到消息回调
@@ -221,7 +221,7 @@ const clearHistory = async () => {
   if (!confirm('确定要清空对话历史吗？')) return
 
   try {
-    await clearChatHistory(userStore.userInfo?.id, currentConversationId.value)
+    await clearChatHistory(userStore.user_id, currentConversationId.value)
     messages.value = []
     currentConversationId.value = null
     emit('update:conversationId', null)
@@ -233,10 +233,10 @@ const clearHistory = async () => {
 
 // 加载历史记录
 const loadHistory = async () => {
-  if (!userStore.userInfo?.id || !currentConversationId.value) return
+  if (!userStore.user_id || !currentConversationId.value) return
 
   try {
-    const res = await getChatHistory(userStore.userInfo.id, currentConversationId.value)
+    const res = await getChatHistory(userStore.user_id, currentConversationId.value)
     if (res.data.status === 0 && res.data.data) {
       messages.value = res.data.data.map(msg => ({
         role: msg.role,
@@ -251,18 +251,19 @@ const loadHistory = async () => {
 }
 
 // 监听conversationId变化
-watch(() => props.conversationId, (newVal) => {
-  if (newVal !== currentConversationId.value) {
+watch(() => props.conversationId, async (newVal, oldVal) => {
+  // 只要值发生变化就重新加载
+  if (newVal !== oldVal) {
     currentConversationId.value = newVal
     messages.value = []
     if (newVal) {
-      loadHistory()
+      await nextTick()
+      await loadHistory()
     }
   }
-})
+}, { immediate: true })
 
 onMounted(() => {
-  loadHistory()
   // 自动聚焦输入框
   nextTick(() => {
     inputRef.value?.focus()

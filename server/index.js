@@ -35,7 +35,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(expressJWT({
   secret: config.jwtSecretKey,
   algorithms: ['HS256']
-}).unless({ path: [/^\/api\//, /^\/uploads\//] }))
+}).unless({ path: [/^\/api\//, /^\/uploads\//, /^\/ai\//] }))
 
 // 设置静态文件目录，添加更多选项
 app.use('/uploads', (req, res, next) => {

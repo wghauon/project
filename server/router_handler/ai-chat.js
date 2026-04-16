@@ -152,7 +152,8 @@ async function getConversationHistory(userId, conversationId) {
     
     return rows.map(row => ({
       role: row.role,
-      content: row.content
+      content: row.content,
+      created_at: row.created_at
     }))
   } catch (error) {
     console.error('获取对话历史失败:', error)

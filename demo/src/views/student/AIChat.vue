@@ -54,7 +54,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import StudentNavigator from '@/components/StudentNavigator.vue'
 import AIChatComponent from '@/components/AIChat.vue'
 import { getConversationList, deleteConversation } from '@/api/ai-chat'
 import { useUserStore } from '@/stores/user'
@@ -88,7 +87,6 @@ const loadConversations = async () => {
 
   try {
     const res = await getConversationList(userStore.user_id)
-    console.log(res)
     if (res.data.status === 0) {
       conversations.value = res.data.data || []
     }
@@ -112,7 +110,7 @@ const deleteConv = async (conversationId) => {
   if (!confirm('确定要删除这个对话吗？')) return
 
   try {
-    await deleteConversation(userStore.userInfo.id, conversationId)
+    await deleteConversation(userStore.user_id, conversationId)
     // 如果删除的是当前对话，清空当前对话ID
     if (currentConversationId.value === conversationId) {
       currentConversationId.value = null
