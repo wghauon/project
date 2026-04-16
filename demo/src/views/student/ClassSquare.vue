@@ -61,7 +61,7 @@ const sortCourses = (type) => {
 
 // 加入课程
 const handleJoinCourse = async (course) => {
-  if (!userStore.token) {
+  if (!userStore.accessToken) {
     alert('请先登录')
     router.push('/')
     return

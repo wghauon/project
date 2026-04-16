@@ -405,7 +405,50 @@ exports.getExamList = async (req, res) => {
       WHERE ce.student_id = ? AND ce.status = 1
       ORDER BY e.start_time DESC
     `, [studentId, studentId, studentId])
-    res.send({ status: 0, message: '获取成功', data: rows })
+    
+    // 转换数据格式以匹配前端期望
+    const now = new Date()
+    const formattedRows = rows.map(exam => {
+      const startTime = exam.start_time ? new Date(exam.start_time) : null
+      const endTime = exam.end_time ? new Date(exam.end_time) : null
+      
+      // 确定考试状态
+      let status
+      if (exam.my_status === 1) {
+        // 已提交答卷 - 已完成
+        status = 'completed'
+      } else if (exam.my_status === 0) {
+        // 已开始但未提交 - 进行中
+        status = 'ongoing'
+      } else if (startTime && now < startTime) {
+        // 未开始且时间未到 - 待开始
+        status = 'upcoming'
+      } else if (startTime && endTime && now >= startTime && now <= endTime) {
+        // 正在进行中（在考试时间段内，且学生未开始）
+        status = 'ongoing'
+      } else if (endTime && now > endTime) {
+        // 未参加且已结束 - 缺考
+        status = 'missed'
+      } else {
+        // 其他情况，默认为待开始
+        status = 'upcoming'
+      }
+      
+      return {
+        exam_id: exam.exam_id,
+        exam_name: exam.title,
+        course_name: exam.course_name,
+        duration: exam.duration,
+        total_score: exam.total_score,
+        start_time: exam.start_time,
+        end_time: exam.end_time,
+        status: status,
+        score: exam.my_score,
+        question_count: null // 如果需要可以从 exam_questions 表查询
+      }
+    })
+    
+    res.send({ status: 0, message: '获取成功', data: formattedRows })
   } catch (err) {
     res.send({ status: 1, message: err.message })
   }

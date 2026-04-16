@@ -27,6 +27,17 @@ instance.interceptors.request.use(
   },
 )
 
+// 用于标记是否正在刷新token
+let isRefreshing = false
+// 等待token刷新的请求队列
+let pendingRequests = []
+
+// 执行等待中的请求
+function executePendingRequests(newToken) {
+  pendingRequests.forEach(callback => callback(newToken))
+  pendingRequests = []
+}
+
 // 添加响应拦截器
 instance.interceptors.response.use(
   function (response) {
@@ -48,17 +59,36 @@ instance.interceptors.response.use(
         return Promise.reject(error)
       }
 
+      // 如果正在刷新token，将请求加入队列等待
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          pendingRequests.push((newToken) => {
+            config.headers.Authorization = newToken
+            resolve(instance(config))
+          })
+        })
+      }
+
+      isRefreshing = true
+
       try {
         // 尝试刷新token
         const newAccessToken = await userStore.refreshAccessToken()
-        
+
+        // 执行等待中的请求
+        executePendingRequests(newAccessToken)
+
         // 用新token重发原请求
         config.headers.Authorization = newAccessToken
         return instance(config)
       } catch (refreshError) {
-        // 刷新失败，跳转到登录页
+        // 刷新失败，执行等待中的请求（会失败）
+        executePendingRequests(null)
+        // 跳转到登录页
         router.push('/')
         return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
       }
     }
 

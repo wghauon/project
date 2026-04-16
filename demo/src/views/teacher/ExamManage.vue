@@ -218,6 +218,16 @@ const handlePublishExam = async (exam) => {
   }
 }
 
+// 转换数字题目类型为字符串
+const parseQuestionType = (type) => {
+  const typeMap = {
+    1: 'single',
+    2: 'multiple',
+    3: 'judge'
+  }
+  return typeMap[type] || 'single'
+}
+
 // 管理题目
 const manageQuestions = async (exam) => {
   currentExam.value = exam
@@ -225,8 +235,12 @@ const manageQuestions = async (exam) => {
     const res = await getExamQuestions(exam.exam_id)
     if (res.data.status === 0) {
       questions.value = res.data.data || []
-      // 确保选项是数组
+      // 确保选项是数组，并转换题目类型
       questions.value.forEach(q => {
+        // 转换题目类型
+        q.question_type = parseQuestionType(q.question_type)
+        
+        // 解析选项
         if (typeof q.options === 'string') {
           try {
             q.options = JSON.parse(q.options)
@@ -236,6 +250,11 @@ const manageQuestions = async (exam) => {
         }
         if (!q.options || !Array.isArray(q.options)) {
           q.options = ['', '', '', '']
+        }
+        
+        // 转换多选题答案为数组
+        if (q.question_type === 'multiple' && typeof q.correct_answer === 'string') {
+          q.correct_answer = q.correct_answer.split('')
         }
       })
     }
@@ -393,6 +412,16 @@ const validateQuestion = (question) => {
   return null
 }
 
+// 转换题目类型为数字（数据库要求）
+const convertQuestionType = (type) => {
+  const typeMap = {
+    'single': 1,
+    'multiple': 2,
+    'judge': 3
+  }
+  return typeMap[type] || 1
+}
+
 // 保存题目
 const saveQuestions = async () => {
   // 验证所有题目
@@ -414,9 +443,17 @@ const saveQuestions = async () => {
   savingQuestions.value = true
   try {
     for (const question of questions.value) {
+      // 转换题目类型为数字，并处理正确答案格式
       const questionData = {
-        ...question,
-        options: question.options
+        exam_id: question.exam_id,
+        question_type: convertQuestionType(question.question_type),
+        question_text: question.question_text,
+        options: question.options,
+        correct_answer: Array.isArray(question.correct_answer) 
+          ? question.correct_answer.join('') 
+          : question.correct_answer,
+        score: question.score,
+        sort_order: question.sort_order
       }
       
       if (question.question_id) {
@@ -433,7 +470,7 @@ const saveQuestions = async () => {
     fetchExams()
   } catch (error) {
     console.error('保存题目失败:', error)
-    alert('保存失败，请稍后重试')
+    alert('保存失败：' + (error.response?.data?.message || error.message || '请稍后重试'))
   } finally {
     savingQuestions.value = false
   }
@@ -464,12 +501,21 @@ const previewExamQuestions = async (exam) => {
     if (res.data.status === 0) {
       previewQuestions.value = res.data.data || []
       previewQuestions.value.forEach(q => {
+        // 转换题目类型
+        q.question_type = parseQuestionType(q.question_type)
+        
+        // 解析选项
         if (typeof q.options === 'string') {
           try {
             q.options = JSON.parse(q.options)
           } catch {
             q.options = []
           }
+        }
+        
+        // 转换多选题答案为数组
+        if (q.question_type === 'multiple' && typeof q.correct_answer === 'string') {
+          q.correct_answer = q.correct_answer.split('')
         }
       })
     }
