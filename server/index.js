@@ -78,7 +78,7 @@ app.use('/ai',aiChatRouter)
 // 错误中间件
 app.use(function (err,req,res,next) {
   // 捕获身份认证失败的错误
-  if(err.name === 'UnauthorizedError') { return res.send({ status: 1, message: '身份认证失败'})}
+  if(err.name === 'UnauthorizedError') { return res.status(401).send({ status: 1, message: '身份认证失败'})}
   // 打印错误日志
   console.error(err)
   res.status(500).send({ status: 1, message: err.message || '服务器内部错误' })

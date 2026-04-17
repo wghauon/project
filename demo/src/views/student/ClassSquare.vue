@@ -32,7 +32,7 @@ const fetchCourses = async () => {
     const params = {}
     if (filters.value.category) params.category = filters.value.category
     if (filters.value.difficulty) params.difficulty = filters.value.difficulty
-    
+
     const res = await getCourseList(params)
     if (res.data.status === 0) {
       courses.value = res.data.data || []
@@ -157,9 +157,9 @@ onMounted(() => {
         </button>
       </div>
       <div class="announcement-list">
-        <div 
-          v-for="announcement in announcements.slice(0, 1)" 
-          :key="announcement.notification_id" 
+        <div
+          v-for="announcement in announcements.slice(0, 1)"
+          :key="announcement.notification_id"
           class="announcement-card"
         >
           <div class="announcement-card-header">
@@ -241,22 +241,22 @@ onMounted(() => {
         <button :class="{ active: sortBy === 'rating' }" @click="sortCourses('rating')">评分最高</button>
       </div>
     </div>
-    
+
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
       <p>正在加载课程...</p>
     </div>
-    
+
     <!-- 课程网格 -->
     <div v-else class="course-grid">
-      <div 
-        v-for="(course, index) in courses" 
-        :key="course.course_id" 
+      <div
+        v-for="(course, index) in courses"
+        :key="course.course_id"
         class="course-card"
       >
-        <div 
-          class="course-cover" 
+        <div
+          class="course-cover"
           :style="{ background: getCoverGradient(index) }"
           @click="viewCourseDetail(course.course_id)"
         >
@@ -277,13 +277,13 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    
+
     <!-- 空状态 -->
     <div v-if="!loading && courses.length === 0" class="empty-state">
       <div class="empty-icon">📚</div>
       <p>暂无课程</p>
     </div>
-    
+
     <!-- 分页 -->
     <div v-if="!loading && courses.length > 0" class="pagination">
       <button>上一页</button>
