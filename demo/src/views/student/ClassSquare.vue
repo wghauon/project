@@ -257,10 +257,9 @@ onMounted(() => {
       >
         <div
           class="course-cover"
-          :style="{ background: getCoverGradient(index) }"
+          :style="{ backgroundImage: `url(${course.cover_image || '/default-course-cover.jpg'})` }"
           @click="viewCourseDetail(course.course_id)"
         >
-          <span class="course-emoji">{{ ['💻', '📊', '🧮', '🌐', '🤖', '📱', '🎨', '📈'][index % 8] }}</span>
           <div class="course-difficulty">{{ getDifficultyText(course.difficulty) }}</div>
         </div>
         <div class="course-info">
@@ -536,9 +535,9 @@ onMounted(() => {
   font-size: 48px;
   position: relative;
   cursor: pointer;
-}
-.course-emoji {
-  font-size: 64px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .course-difficulty {
   position: absolute;
