@@ -257,9 +257,14 @@ onMounted(() => {
       >
         <div
           class="course-cover"
-          :style="{ backgroundImage: `url(${course.cover_image || '/default-course-cover.jpg'})` }"
           @click="viewCourseDetail(course.course_id)"
         >
+          <img
+            :src="course.cover_image || '/default-course-cover.jpg'"
+            :alt="course.course_name"
+            loading="lazy"
+            class="course-cover-img"
+          />
           <div class="course-difficulty">{{ getDifficultyText(course.difficulty) }}</div>
         </div>
         <div class="course-info">
@@ -535,9 +540,14 @@ onMounted(() => {
   font-size: 48px;
   position: relative;
   cursor: pointer;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.course-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .course-difficulty {
   position: absolute;
