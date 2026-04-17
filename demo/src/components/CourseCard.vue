@@ -1,16 +1,20 @@
 <script setup>
 import { useRouter } from 'vue-router'
 const router = useRouter()
-defineProps({
+const props = defineProps({
   course: {
     type: Object,
     required: true,
   },
 })
+const emit = defineEmits(['delete'])
 function checkStatus(status) {
   if (status === 0) return '草稿'
   if (status === 1) return '待审核'
   if (status === 2) return '已通过'
+}
+const handleDelete = () => {
+  emit('delete', props.course.course_id)
 }
 </script>
 <template>
@@ -33,6 +37,7 @@ function checkStatus(status) {
           管理课程
         </button>
         <button class="btn-edit" @click="router.push(`/teacher/edit-course/${course.course_id}`)">编辑</button>
+        <button class="btn-delete" @click="handleDelete">删除</button>
       </div>
     </div>
   </div>
@@ -102,5 +107,17 @@ function checkStatus(status) {
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
+}
+.btn-delete {
+  padding: 10px 16px;
+  background: #ffebee;
+  color: #f44336;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-delete:hover {
+  background: #ffcdd2;
 }
 </style>

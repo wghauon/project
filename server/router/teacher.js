@@ -13,6 +13,8 @@ router.get('/courses', teacher.getTeacherCourses)
 router.get('/course_detail',teacher.courseDetail)
 // 课程更新接口
 router.post('/course/update', imgStorage.single('file'), teacher.updateCourse)
+// 删除课程接口
+router.delete('/course/:courseId', teacher.deleteCourse)
 // 视频列表查询接口
 router.get('/video_list',teacher.videoList)
 // 视频URL请求接口

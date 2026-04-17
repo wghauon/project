@@ -154,6 +154,64 @@ exports.updateCourse = async (req, res) => {
     res.send({ status: 1, message: err.message })
   }
 }
+
+// 删除课程接口
+exports.deleteCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    const teacherId = req.auth?.user_id
+    
+    if (!courseId) {
+      return res.send({ status: 1, message: '缺少课程ID' })
+    }
+    
+    if (!teacherId) {
+      return res.send({ status: 1, message: '未登录或token无效' })
+    }
+    
+    // 查询课程信息并验证教师权限
+    const [courses] = await db.execute(
+      'SELECT * FROM courses WHERE course_id = ?',
+      [courseId]
+    )
+    
+    if (courses.length === 0) {
+      return res.send({ status: 1, message: '课程不存在' })
+    }
+    
+    const course = courses[0]
+    
+    // 验证是否是该课程的创建教师
+    if (course.teacher_id !== teacherId) {
+      return res.send({ status: 1, message: '无权限删除该课程' })
+    }
+    
+    // 删除封面图片文件
+    if (course.cover_image) {
+      try {
+        const fileName = course.cover_image.split('/').pop()
+        const filePath = path.join(__dirname, '..', 'uploads', 'img', fileName)
+        await fs.remove(filePath)
+      } catch (e) {
+        console.log('封面图片删除失败或不存在:', e.message)
+      }
+    }
+    
+    // 删除课程（由于数据库设置了外键级联删除，相关数据会自动删除）
+    const [result] = await db.execute(
+      'DELETE FROM courses WHERE course_id = ?',
+      [courseId]
+    )
+    
+    if (result.affectedRows !== 1) {
+      return res.send({ status: 1, message: '课程删除失败' })
+    }
+    
+    res.send({ status: 0, message: '课程删除成功' })
+  } catch (err) {
+    res.send({ status: 1, message: err.message })
+  }
+}
 // 视频列表查询接口
 exports.videoList = async (req, res) => {
   try {

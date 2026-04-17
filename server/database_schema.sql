@@ -1,5 +1,5 @@
 -- 在线教育平台数据库表结构
--- 生成日期: 2026-04-07
+-- 生成日期: 2026-04-17
 -- 数据库: MySQL 8.0
 
 -- =====================================================
@@ -29,7 +29,20 @@ CREATE TABLE IF NOT EXISTS `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
 -- =====================================================
--- 2. 课程分类表 (course_categories)
+-- 2. 刷新令牌表 (refresh_tokens)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `refresh_tokens` (
+    `id` int NOT NULL AUTO_INCREMENT COMMENT '主键，唯一标识',
+    `user_id` int NOT NULL COMMENT '用户ID',
+    `token` varchar(500) NOT NULL COMMENT '刷新令牌',
+    `expires_at` datetime NOT NULL COMMENT '过期时间',
+    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='刷新令牌表';
+
+-- =====================================================
+-- 3. 课程分类表 (course_categories)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `course_categories` (
     `category_id` int NOT NULL AUTO_INCREMENT COMMENT '主键，分类唯一标识',
@@ -41,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `course_categories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程分类表';
 
 -- =====================================================
--- 3. 课程表 (courses)
+-- 4. 课程表 (courses)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `courses` (
     `course_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，课程唯一标识',
@@ -75,7 +88,7 @@ CREATE TABLE IF NOT EXISTS `courses` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程表';
 
 -- =====================================================
--- 4. 章节表 (chapters)
+-- 5. 章节表 (chapters)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `chapters` (
     `chapter_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，章节唯一标识',
@@ -93,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `chapters` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='章节表';
 
 -- =====================================================
--- 5. 视频表 (videos)
+-- 6. 视频表 (videos)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `videos` (
     `video_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，视频唯一标识',
@@ -126,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `videos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='视频表';
 
 -- =====================================================
--- 6. 选课记录表 (course_enrollments)
+-- 7. 选课记录表 (course_enrollments)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `course_enrollments` (
     `enrollment_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，记录唯一标识',
@@ -146,7 +159,7 @@ CREATE TABLE IF NOT EXISTS `course_enrollments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='选课记录表';
 
 -- =====================================================
--- 7. 视频学习进度表 (video_progress)
+-- 8. 视频学习进度表 (video_progress)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `video_progress` (
     `progress_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，记录唯一标识',
@@ -169,7 +182,7 @@ CREATE TABLE IF NOT EXISTS `video_progress` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='视频学习进度表';
 
 -- =====================================================
--- 8. 通知表 (notifications)
+-- 9. 通知表 (notifications)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `notifications` (
     `notification_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，通知唯一标识',
@@ -190,7 +203,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知表';
 
 -- =====================================================
--- 9. 讨论表 (discussions)
+-- 10. 讨论表 (discussions)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `discussions` (
     `discussion_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，讨论唯一标识',
@@ -214,7 +227,7 @@ CREATE TABLE IF NOT EXISTS `discussions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='讨论表';
 
 -- =====================================================
--- 10. 课程资料表 (materials)
+-- 11. 课程资料表 (materials)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `materials` (
     `material_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，资料唯一标识',
@@ -236,7 +249,7 @@ CREATE TABLE IF NOT EXISTS `materials` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程资料表';
 
 -- =====================================================
--- 11. 实验表 (experiments)
+-- 12. 实验表 (experiments)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `experiments` (
     `experiment_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，实验唯一标识',
@@ -254,7 +267,7 @@ CREATE TABLE IF NOT EXISTS `experiments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='实验表';
 
 -- =====================================================
--- 12. 实验提交表 (experiment_submissions)
+-- 13. 实验提交表 (experiment_submissions)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `experiment_submissions` (
     `submission_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，提交唯一标识',
@@ -276,7 +289,7 @@ CREATE TABLE IF NOT EXISTS `experiment_submissions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='实验提交表';
 
 -- =====================================================
--- 13. 考试表 (exams)
+-- 14. 考试表 (exams)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `exams` (
     `exam_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，考试唯一标识',
@@ -297,7 +310,7 @@ CREATE TABLE IF NOT EXISTS `exams` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='考试表';
 
 -- =====================================================
--- 14. 考试题目表 (exam_questions)
+-- 15. 考试题目表 (exam_questions)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `exam_questions` (
     `question_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，题目唯一标识',
@@ -315,7 +328,7 @@ CREATE TABLE IF NOT EXISTS `exam_questions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='考试题目表';
 
 -- =====================================================
--- 15. 考试记录表 (exam_records)
+-- 16. 考试记录表 (exam_records)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `exam_records` (
     `record_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，记录唯一标识',
@@ -335,7 +348,7 @@ CREATE TABLE IF NOT EXISTS `exam_records` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='考试记录表';
 
 -- =====================================================
--- 16. 评论表 (comments)
+-- 17. 评论表 (comments)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS `comments` (
     `comment_id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键，评论唯一标识',
@@ -357,12 +370,27 @@ CREATE TABLE IF NOT EXISTS `comments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评论表';
 
 -- =====================================================
+-- 18. AI对话历史记录表 (ai_chat_history)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `ai_chat_history` (
+    `id` int NOT NULL AUTO_INCREMENT COMMENT '主键，唯一标识',
+    `user_id` int NOT NULL COMMENT '用户ID',
+    `conversation_id` varchar(50) NOT NULL COMMENT '对话会话ID',
+    `role` enum('user','assistant','system') NOT NULL COMMENT '消息角色',
+    `content` text NOT NULL COMMENT '消息内容',
+    `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_user_conversation` (`user_id`,`conversation_id`),
+    KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI对话历史记录表';
+
+-- =====================================================
 -- 初始化数据
 -- =====================================================
 
 -- 插入默认管理员账号 (密码: admin123)
 INSERT INTO `users` (`username`, `password`, `real_name`, `role`, `status`, `created_at`) VALUES
-('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '系统管理员', 3, 1, NOW());
+('admin', '123456', '系统管理员', 3, 1, NOW());
 
 -- 插入示例分类数据
 INSERT INTO `course_categories` (`category_name`, `parent_id`, `sort_order`) VALUES

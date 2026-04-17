@@ -3,7 +3,7 @@ import CourseCard from '@/components/CourseCard.vue'
 import router from '@/router'
 import { useUserStore } from '@/stores/user'
 import { courseListSearch, getTeacherStats } from '@/api/course'
-import { getAnnouncements } from '@/api/teacher'
+import { getAnnouncements, deleteCourse } from '@/api/teacher'
 import { ref, onMounted } from 'vue'
 
 const userStore = useUserStore()
@@ -30,6 +30,42 @@ const fetchAnnouncements = async () => {
   }
 }
 
+// 获取课程列表
+const fetchCourseList = async () => {
+  const res = await courseListSearch(userStore.user_id)
+  courseList.value = res.data.data
+}
+
+// 删除课程
+const handleDeleteCourse = async (courseId) => {
+  const confirmed = confirm(
+    '确定要删除该课程吗？删除后无法恢复，所有课程数据（包括章节、视频、学生记录等）都将被删除。'
+  )
+  
+  if (!confirmed) {
+    return
+  }
+  
+  try {
+    const res = await deleteCourse(courseId)
+    if (res.data.status === 0) {
+      alert('课程删除成功')
+      // 重新获取课程列表
+      await fetchCourseList()
+      // 刷新统计数据
+      const statsRes = await getTeacherStats(userStore.user_id)
+      if (statsRes.data.status === 0) {
+        stats.value = statsRes.data.data
+      }
+    } else {
+      alert(res.data.message || '删除失败')
+    }
+  } catch (error) {
+    console.error('删除课程失败:', error)
+    alert(error.response?.data?.message || '删除失败')
+  }
+}
+
 // 跳转到公告列表页
 const goToAnnouncements = () => {
   router.push('/teacher/announcements')
@@ -52,8 +88,7 @@ const getTypeClass = (type) => {
 
 onMounted(async () => {
   // 获取课程列表
-  const res = await courseListSearch(userStore.user_id)
-  courseList.value = res.data.data
+  await fetchCourseList()
   
   // 获取教师统计数据
   const statsRes = await getTeacherStats(userStore.user_id)
@@ -157,7 +192,12 @@ onMounted(async () => {
     <!-- 课程列表 -->
     <h2 class="section-title">📖 我的课程</h2>
     <div class="course-grid">
-      <CourseCard v-for="item in courseList" :key="item.course_id" :course="item"></CourseCard>
+      <CourseCard 
+        v-for="item in courseList" 
+        :key="item.course_id" 
+        :course="item"
+        @delete="handleDeleteCourse"
+      ></CourseCard>
     </div>
   </main>
 </template>
