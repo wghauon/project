@@ -6,6 +6,23 @@ const fs = require('fs-extra')
 const path = require('path')
 // 导入spark-md5
 const SparkMD5 = require('spark-md5')
+// 导入SSE管理器
+const sseManager = require('../utils/sse-manager')
+// 导入SSE处理函数
+const { getDashboardData } = require('./sse')
+
+// 主动推送仪表盘更新（供内部调用）
+async function broadcastDashboardUpdate() {
+  try {
+    const data = await getDashboardData()
+    sseManager.updateCache(data)
+    sseManager.broadcast(data)
+    console.log('[SSE] 仪表盘数据已主动推送')
+  } catch (err) {
+    console.error('[SSE] 推送更新失败:', err)
+  }
+}
+
 // 课程信息上传接口
 exports.course = async (req, res) => {
   try {
@@ -41,6 +58,10 @@ exports.course = async (req, res) => {
     // 课程表
     const [result] = await db.execute('insert into courses (course_name, teacher_id, category_id, description, cover_image, difficulty, credit, hours, status, join_type, invite_code) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',[course_name, teacher_id, category_id, description, cover_image, difficulty, credit, hours, status, join_type || 1, invite_code || ''])
     if (result.affectedRows !== 1) { return res.send({ message: '课程信息录入失败'}) }
+    
+    // 课程创建成功，主动推送仪表盘更新（通知所有管理员）
+    broadcastDashboardUpdate()
+    
     res.send({ message: '课程信息录入成功' })
   }
   catch (err) {
@@ -206,6 +227,9 @@ exports.deleteCourse = async (req, res) => {
     if (result.affectedRows !== 1) {
       return res.send({ status: 1, message: '课程删除失败' })
     }
+    
+    // 课程删除成功，主动推送仪表盘更新
+    broadcastDashboardUpdate()
     
     res.send({ status: 0, message: '课程删除成功' })
   } catch (err) {

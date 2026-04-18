@@ -20,6 +20,8 @@ const teacherExamRouter = require('./router/teacher-exam')
 const adminRouter = require('./router/admin')
 // 导入AI聊天路由模块
 const aiChatRouter = require('./router/ai-chat')
+// 导入SSE路由模块
+const sseRouter = require('./router/sse')
 
 // 更详细的CORS配置
 app.use(cors({
@@ -31,11 +33,41 @@ app.use(cors({
 app.use(express.json())
 // 配置解析 application/x-www-form-urlencoded 格式表单数据中间件
 app.use(express.urlencoded({ extended: true }))
+
+// SSE路由的Token验证中间件（支持URL参数传递token）
+const jwt = require('jsonwebtoken')
+app.use('/sse', (req, res, next) => {
+  // 尝试从URL参数获取token
+  const tokenFromQuery = req.query.token
+  // 尝试从header获取token
+  const authHeader = req.headers.authorization
+  
+  let token = null
+  
+  if (tokenFromQuery) {
+    token = tokenFromQuery.replace('Bearer ', '')
+  } else if (authHeader) {
+    token = authHeader.replace('Bearer ', '')
+  }
+  
+  if (!token) {
+    return res.status(401).json({ status: 1, message: '未提供访问令牌' })
+  }
+  
+  try {
+    const decoded = jwt.verify(token, config.jwtSecretKey)
+    req.auth = decoded
+    next()
+  } catch (err) {
+    return res.status(401).json({ status: 1, message: '无效的访问令牌' })
+  }
+})
+
 // 全局注册解析token中间件
 app.use(expressJWT({
   secret: config.jwtSecretKey,
   algorithms: ['HS256']
-}).unless({ path: [/^\/api\//, /^\/uploads\//, /^\/ai\//] }))
+}).unless({ path: [/^\/api\//, /^\/uploads\//, /^\/ai\//, /^\/sse\//] }))
 
 // 设置静态文件目录，添加更多选项
 app.use('/uploads', (req, res, next) => {
@@ -70,8 +102,8 @@ app.use('/teacher-exam',teacherExamRouter)
 app.use('/admin',adminRouter)
 // 注册AI聊天路由模块
 app.use('/ai',aiChatRouter)
-
-
+// 注册SSE路由模块
+app.use('/sse',sseRouter)
 
 
 

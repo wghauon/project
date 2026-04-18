@@ -4,6 +4,23 @@ const db = require('../db/index')
 const jwt = require('jsonwebtoken')
 // 导入全局配置文件
 const config = require('../config')
+// 导入SSE管理器
+const sseManager = require('../utils/sse-manager')
+// 导入SSE处理函数
+const { getDashboardData } = require('./sse')
+
+// 主动推送仪表盘更新（供内部调用）
+async function broadcastDashboardUpdate() {
+  try {
+    const data = await getDashboardData()
+    sseManager.updateCache(data)
+    sseManager.broadcast(data)
+    console.log('[SSE] 仪表盘数据已主动推送')
+  } catch (err) {
+    console.error('[SSE] 推送更新失败:', err)
+  }
+}
+
 // 注册
 exports.register = async (req, res) => {
   try {
@@ -30,6 +47,9 @@ exports.register = async (req, res) => {
     else {
       return res.send({ status: 1, message: '没有指定注册身份'})
     }
+    // 注册成功，主动推送仪表盘更新
+    broadcastDashboardUpdate()
+    
     // 注册成功
     res.send({ status: 0, message: '注册成功'})
   } 

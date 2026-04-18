@@ -12,6 +12,82 @@ export const getRecentActivities = () => {
   return instance.get('/admin/dashboard/activities')
 }
 
+// ==================== SSE实时数据流 ====================
+
+/**
+ * 创建SSE连接 - 管理员仪表盘实时数据流
+ * @param {Object} options - 配置选项
+ * @param {Function} options.onMessage - 收到消息时的回调
+ * @param {Function} options.onConnect - 连接成功时的回调
+ * @param {Function} options.onError - 连接错误时的回调
+ * @param {Function} options.onClose - 连接关闭时的回调
+ * @param {string} options.token - 访问令牌
+ * @returns {Object} SSE连接控制器 { close: Function }
+ */
+export const createDashboardStream = (options = {}) => {
+  const { onMessage, onConnect, onError, onClose, token } = options
+  
+  // 构建SSE连接URL，添加token作为查询参数
+  const baseURL = 'http://127.0.0.1:3000'
+  const url = `${baseURL}/sse/admin/dashboard-stream?token=${encodeURIComponent(token || '')}`
+  
+  // 创建EventSource连接
+  const eventSource = new EventSource(url)
+  
+  // 连接成功
+  eventSource.addEventListener('connected', (event) => {
+    console.log('[SSE] 连接成功:', JSON.parse(event.data))
+    if (onConnect) onConnect(JSON.parse(event.data))
+  })
+  
+  // 收到仪表盘数据更新
+  eventSource.addEventListener('dashboard-update', (event) => {
+    try {
+      const data = JSON.parse(event.data)
+      if (onMessage) onMessage(data)
+    } catch (err) {
+      console.error('[SSE] 解析数据失败:', err)
+    }
+  })
+  
+  // 心跳保持
+  eventSource.addEventListener('heartbeat', (event) => {
+    console.log('[SSE] 心跳:', JSON.parse(event.data))
+  })
+  
+  // 错误处理
+  eventSource.onerror = (error) => {
+    console.error('[SSE] 连接错误:', error)
+    if (onError) onError(error)
+  }
+  
+  // 返回控制器
+  return {
+    close: () => {
+      eventSource.close()
+      if (onClose) onClose()
+      console.log('[SSE] 连接已关闭')
+    },
+    get readyState() {
+      return eventSource.readyState
+    }
+  }
+}
+
+/**
+ * 手动触发数据更新推送
+ */
+export const notifyDashboardUpdate = () => {
+  return instance.post('/sse/admin/notify-update')
+}
+
+/**
+ * 获取SSE连接统计
+ */
+export const getSSEStats = () => {
+  return instance.get('/sse/admin/sse-stats')
+}
+
 // ==================== 用户管理 ====================
 
 // 获取用户列表

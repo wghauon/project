@@ -1,5 +1,21 @@
 // 管理员端路由处理函数
 const db = require('../db/index')
+// 导入SSE管理器
+const sseManager = require('../utils/sse-manager')
+// 导入SSE处理函数
+const { getDashboardData } = require('./sse')
+
+// 主动推送仪表盘更新（供内部调用）
+async function broadcastDashboardUpdate() {
+  try {
+    const data = await getDashboardData()
+    sseManager.updateCache(data)
+    sseManager.broadcast(data)
+    console.log('[SSE] 仪表盘数据已主动推送')
+  } catch (err) {
+    console.error('[SSE] 推送更新失败:', err)
+  }
+}
 
 // 获取仪表盘统计数据
 exports.getDashboardStats = async (req, res) => {
@@ -135,6 +151,9 @@ exports.createUser = async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, 1, NOW())
     `, [username, password, real_name, role, email, phone, department])
 
+    // 用户创建成功，主动推送仪表盘更新
+    broadcastDashboardUpdate()
+
     res.send({ status: 0, message: '创建成功', data: { user_id: result.insertId } })
   } catch (err) {
     res.send({ status: 1, message: err.message })
@@ -174,6 +193,10 @@ exports.deleteUser = async (req, res) => {
     }
 
     await db.execute('DELETE FROM users WHERE user_id = ?', [userId])
+    
+    // 用户删除成功，主动推送仪表盘更新
+    broadcastDashboardUpdate()
+    
     res.send({ status: 0, message: '删除成功' })
   } catch (err) {
     res.send({ status: 1, message: err.message })
@@ -245,6 +268,9 @@ exports.approveCourse = async (req, res) => {
       WHERE course_id = ?
     `, [review_remark || '', courseId])
 
+    // 课程审核通过，主动推送仪表盘更新
+    broadcastDashboardUpdate()
+
     res.send({ status: 0, message: '审核通过' })
   } catch (err) {
     res.send({ status: 1, message: err.message })
@@ -262,6 +288,9 @@ exports.rejectCourse = async (req, res) => {
       SET status = 3, review_remark = ?
       WHERE course_id = ?
     `, [review_remark || '', courseId])
+
+    // 课程审核驳回，主动推送仪表盘更新
+    broadcastDashboardUpdate()
 
     res.send({ status: 0, message: '已驳回' })
   } catch (err) {
