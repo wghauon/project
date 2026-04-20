@@ -27,6 +27,8 @@ const router = createRouter({
         { path: 'room-list', component: () => import('@/views/student/RoomList.vue') },
         { path: 'announcements', component: () => import('@/views/student/Announcements.vue') },
         { path: 'ai-chat', component: () => import('@/views/student/AIChat.vue') },
+        { path: 'knowledge-base', component: () => import('@/views/student/KnowledgeBase.vue') },
+        { path: 'knowledge-base/:id', component: () => import('@/views/student/KnowledgeBaseDetail.vue') },
       ],
     },
     // 管理员页面

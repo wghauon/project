@@ -22,6 +22,10 @@ const adminRouter = require('./router/admin')
 const aiChatRouter = require('./router/ai-chat')
 // 导入SSE路由模块
 const sseRouter = require('./router/sse')
+// 导入知识库路由模块
+const knowledgeBaseRouter = require('./router/knowledge-base')
+// 导入RAG聊天路由模块
+const ragChatRouter = require('./router/rag-chat')
 
 // 更详细的CORS配置
 app.use(cors({
@@ -104,6 +108,10 @@ app.use('/admin',adminRouter)
 app.use('/ai',aiChatRouter)
 // 注册SSE路由模块
 app.use('/sse',sseRouter)
+// 注册知识库路由模块
+app.use('/kb',knowledgeBaseRouter)
+// 注册RAG聊天路由模块
+app.use('/rag',ragChatRouter)
 
 
 

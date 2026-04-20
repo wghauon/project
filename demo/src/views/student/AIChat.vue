@@ -11,17 +11,29 @@
           </button>
         </div>
 
+        <!-- 知识库入口 -->
+        <div class="kb-entry" @click="goToKnowledgeBase">
+          <span class="kb-entry-icon">📚</span>
+          <span class="kb-entry-text">我的知识库</span>
+          <span class="kb-entry-arrow">→</span>
+        </div>
+
         <div class="conversation-list" v-if="conversations.length > 0">
           <div
             v-for="conv in conversations"
             :key="conv.conversationId"
             :class="['conversation-item', { active: currentConversationId === conv.conversationId }]"
-            @click="selectConversation(conv.conversationId)"
+            @click="selectConversation(conv)"
           >
-            <div class="conversation-icon">💬</div>
+            <div class="conversation-icon">
+              {{ conv.mode === 'rag' ? '📚' : '💬' }}
+            </div>
             <div class="conversation-info">
               <div class="conversation-title">{{ conv.lastMessage || '新对话' }}</div>
-              <div class="conversation-time">{{ formatTime(conv.lastTime) }}</div>
+              <div class="conversation-meta">
+                <span v-if="conv.mode === 'rag'" class="rag-badge">知识库</span>
+                <span class="conversation-time">{{ formatTime(conv.lastTime) }}</span>
+              </div>
             </div>
             <button
               class="delete-btn"
@@ -44,23 +56,102 @@
       <div class="chat-wrapper">
         <AIChatComponent
           :conversationId="currentConversationId"
+          :kbId="selectedKbId"
+          :mode="chatMode"
           @update:conversationId="currentConversationId = $event"
           @conversation-updated="loadConversations"
+          @changeKb="showKbSelector = true"
+          @clearKb="clearKnowledgeBase"
         />
       </div>
     </div>
+
+    <!-- 知识库选择弹窗 -->
+    <Teleport to="body">
+      <div v-if="showKbSelector" class="modal-overlay" @click="showKbSelector = false">
+        <div class="modal kb-selector-modal" @click.stop>
+          <div class="modal-header">
+            <h3>选择知识库</h3>
+            <button class="close-btn" @click="showKbSelector = false">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="kb-options">
+              <div
+                class="kb-option general"
+                :class="{ active: chatMode === 'general' }"
+                @click="selectMode('general')"
+              >
+                <div class="kb-option-icon">🤖</div>
+                <div class="kb-option-info">
+                  <div class="kb-option-name">通用模式</div>
+                  <div class="kb-option-desc">使用AI的通用知识回答问题</div>
+                </div>
+              </div>
+
+              <div class="kb-section-title">我的知识库</div>
+              
+              <div v-if="knowledgeBases.length === 0" class="empty-kb">
+                <p>暂无可用知识库</p>
+                <button class="create-kb-btn" @click="goToKnowledgeBase">
+                  去创建知识库
+                </button>
+              </div>
+
+              <div
+                v-for="kb in knowledgeBases"
+                :key="kb.kb_id"
+                class="kb-option"
+                :class="{ active: selectedKbId === kb.kb_id }"
+                @click="selectKnowledgeBase(kb.kb_id)"
+              >
+                <div class="kb-option-icon" :style="{ backgroundColor: kb.color + '20' }">
+                  {{ kb.icon }}
+                </div>
+                <div class="kb-option-info">
+                  <div class="kb-option-name">{{ kb.name }}</div>
+                  <div class="kb-option-desc">
+                    {{ kb.doc_count }} 个文档 · {{ kb.total_chunks }} 个片段
+                  </div>
+                </div>
+                <div v-if="selectedKbId === kb.kb_id" class="check-icon">✓</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AIChatComponent from '@/components/AIChat.vue'
 import { getConversationList, deleteConversation } from '@/api/ai-chat'
+import { getAvailableKnowledgeBases } from '@/api/knowledge-base'
 import { useUserStore } from '@/stores/user'
 
+const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
+
 const currentConversationId = ref(null)
 const conversations = ref([])
+const knowledgeBases = ref([])
+const showKbSelector = ref(false)
+const selectedKbId = ref(null)
+const chatMode = ref('general') // 'general' | 'rag'
+
+// 从URL参数初始化
+const initFromQuery = () => {
+  const { kbId, mode } = route.query
+  if (kbId) {
+    selectedKbId.value = parseInt(kbId)
+    chatMode.value = 'rag'
+  } else if (mode === 'rag') {
+    chatMode.value = 'rag'
+  }
+}
 
 // 格式化时间
 const formatTime = (time) => {
@@ -69,15 +160,12 @@ const formatTime = (time) => {
   const now = new Date()
   const diff = now - date
 
-  // 今天
   if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
     return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
   }
-  // 昨天
   if (diff < 48 * 60 * 60 * 1000 && date.getDate() === now.getDate() - 1) {
     return '昨天'
   }
-  // 更早
   return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
 }
 
@@ -95,13 +183,55 @@ const loadConversations = async () => {
   }
 }
 
+// 加载知识库列表
+const loadKnowledgeBases = async () => {
+  try {
+    const res = await getAvailableKnowledgeBases()
+    if (res.data.status === 0) {
+      knowledgeBases.value = res.data.data || []
+    }
+  } catch (error) {
+    console.error('加载知识库列表失败:', error)
+  }
+}
+
 // 选择对话
-const selectConversation = (conversationId) => {
-  currentConversationId.value = conversationId
+const selectConversation = (conv) => {
+  currentConversationId.value = conv.conversationId
+  if (conv.mode === 'rag' && conv.kbId) {
+    selectedKbId.value = conv.kbId
+    chatMode.value = 'rag'
+  } else {
+    selectedKbId.value = null
+    chatMode.value = 'general'
+  }
 }
 
 // 创建新对话
 const createNewChat = () => {
+  currentConversationId.value = null
+  showKbSelector.value = true
+}
+
+// 选择模式
+const selectMode = (mode) => {
+  chatMode.value = mode
+  selectedKbId.value = null
+  showKbSelector.value = false
+}
+
+// 选择知识库
+const selectKnowledgeBase = (kbId) => {
+  selectedKbId.value = kbId
+  chatMode.value = 'rag'
+  showKbSelector.value = false
+  currentConversationId.value = null
+}
+
+// 清除知识库
+const clearKnowledgeBase = () => {
+  selectedKbId.value = null
+  chatMode.value = 'general'
   currentConversationId.value = null
 }
 
@@ -111,11 +241,9 @@ const deleteConv = async (conversationId) => {
 
   try {
     await deleteConversation(userStore.user_id, conversationId)
-    // 如果删除的是当前对话，清空当前对话ID
     if (currentConversationId.value === conversationId) {
       currentConversationId.value = null
     }
-    // 重新加载列表
     loadConversations()
   } catch (error) {
     console.error('删除对话失败:', error)
@@ -123,9 +251,19 @@ const deleteConv = async (conversationId) => {
   }
 }
 
+// 跳转到知识库管理
+const goToKnowledgeBase = () => {
+  router.push('/student/knowledge-base')
+}
+
 onMounted(() => {
+  initFromQuery()
   loadConversations()
+  loadKnowledgeBases()
 })
+
+// 监听路由参数变化
+watch(() => route.query, initFromQuery)
 </script>
 
 <style scoped>
@@ -194,6 +332,41 @@ onMounted(() => {
   line-height: 1;
 }
 
+/* 知识库入口 */
+.kb-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  margin: 8px;
+  background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+  border: 1px solid #667eea30;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kb-entry:hover {
+  background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+  transform: translateX(4px);
+}
+
+.kb-entry-icon {
+  font-size: 24px;
+}
+
+.kb-entry-text {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.kb-entry-arrow {
+  font-size: 14px;
+  color: #667eea;
+}
+
 /* 对话列表 */
 .conversation-list {
   flex: 1;
@@ -238,6 +411,20 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   margin-bottom: 4px;
+}
+
+.conversation-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rag-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 4px;
 }
 
 .conversation-time {
@@ -317,5 +504,167 @@ onMounted(() => {
 
 .conversation-list::-webkit-scrollbar-thumb:hover {
   background: #ccc;
+}
+
+/* 弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 480px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* 知识库选择器 */
+.kb-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kb-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kb-option:hover {
+  background: #f0f0f0;
+}
+
+.kb-option.active {
+  border-color: #667eea;
+  background: #667eea10;
+}
+
+.kb-option.general {
+  background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+}
+
+.kb-option-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: white;
+  flex-shrink: 0;
+}
+
+.kb-option-info {
+  flex: 1;
+}
+
+.kb-option-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.kb-option-desc {
+  font-size: 12px;
+  color: #888;
+}
+
+.check-icon {
+  width: 24px;
+  height: 24px;
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.kb-section-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 8px;
+}
+
+.empty-kb {
+  text-align: center;
+  padding: 32px;
+  color: #888;
+}
+
+.empty-kb p {
+  margin: 0 0 16px 0;
+}
+
+.create-kb-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.create-kb-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 </style>
