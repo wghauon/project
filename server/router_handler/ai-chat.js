@@ -1,10 +1,10 @@
 const OpenAI = require('openai')
 const db = require('../db/index')
 
-// 初始化DeepSeek客户端
+// 初始化阿里云百炼DeepSeek客户端
 const openai = new OpenAI({
-  baseURL: 'https://api.deepseek.com',
-  apiKey: 'sk-77d99dff614849dab3efe7f85611a883'
+  baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  apiKey: 'sk-539f3b21871a497194f9c5548efb7574'
 })
 
 // 系统提示词 - 教育助手
@@ -35,9 +35,9 @@ exports.chat = async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
 
-    // 调用DeepSeek API（流式）
+    // 调用阿里云百炼DeepSeek API（流式）
     const stream = await openai.chat.completions.create({
-      model: 'deepseek-chat',
+      model: 'deepseek-r1',
       messages: messages,
       stream: true
     })
