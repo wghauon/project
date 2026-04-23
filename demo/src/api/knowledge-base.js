@@ -60,7 +60,7 @@ export function getDocuments(kbId) {
 export function uploadDocument(kbId, file, onProgress) {
   const formData = new FormData()
   formData.append('file', file)
-  
+
   return request.post(`/kb/knowledge-bases/${kbId}/documents`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
@@ -101,8 +101,9 @@ export function searchKnowledgeBase(kbId, query) {
 export function ragChatStream(params) {
   const userStore = useUserStore()
   const token = userStore.accessToken
-  
-  return fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/rag/rag/chat`, {
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000'
+  return fetch(`${apiBaseUrl}/rag/rag/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

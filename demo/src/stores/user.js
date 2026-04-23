@@ -63,7 +63,8 @@ export const useUserStore = defineStore(
       isRefreshing.value = true
 
       try {
-        const res = await axios.post('http://127.0.0.1:3000/api/refresh', {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000'
+        const res = await axios.post(`${apiBaseUrl}/api/refresh`, {
           refreshToken: refreshToken.value
         })
 

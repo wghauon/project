@@ -6,7 +6,8 @@ export const chatWithAI = (data, onMessage, onError, onComplete) => {
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', 'http://127.0.0.1:3000/ai/chat', true)
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000'
+    xhr.open('POST', `${apiBaseUrl}/ai/chat`, true)
     xhr.setRequestHeader('Content-Type', 'application/json')
     xhr.setRequestHeader('Authorization', localStorage.getItem('accessToken') || '')
 
